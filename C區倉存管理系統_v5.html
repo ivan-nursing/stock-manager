@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="zh-HK" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="C區倉存管理系統">
+<meta name="theme-color" content="#0b7a8a">
+<title>C區倉存管理系統</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root,[data-theme="light"]{
+  --bg:#f4f6f9;--surface:#fff;--surface2:#f9fafb;--offset:#f0f2f5;
+  --border:#e2e6ea;--divider:#e9ecef;
+  --text:#1a2332;--muted:#6b7a8d;--faint:#b0bac5;
+  --primary:#0b7a8a;--primary-h:#085f6d;--primary-hl:#d0eef1;
+  --success:#2e7d32;--success-hl:#e8f5e9;
+  --warn:#b45309;--warn-hl:#fef3c7;
+  --error:#c0392b;--error-hl:#fdecea;
+  --info:#1565c0;--info-hl:#e3f2fd;
+  --shadow:0 1px 3px rgba(0,0,0,.06);--shadow-md:0 4px 12px rgba(0,0,0,.08);
+  --r:8px;--rl:12px;
+  --xs:clamp(.7rem,.65rem + .2vw,.8rem);
+  --sm:clamp(.8rem,.75rem + .2vw,.9rem);
+  --base:clamp(.875rem,.82rem + .2vw,1rem);
+  --lg:clamp(1rem,.9rem + .4vw,1.2rem);
+  --xl:clamp(1.2rem,1rem + .6vw,1.5rem);
+}
+[data-theme="dark"]{
+  --bg:#131920;--surface:#1c242e;--surface2:#222c38;--offset:#273040;
+  --border:#2e3a48;--divider:#253040;
+  --text:#d0d8e4;--muted:#8094a8;--faint:#506070;
+  --primary:#3fa8b8;--primary-h:#2a8fa0;--primary-hl:#1a3a40;
+  --success:#4caf50;--success-hl:#1a2e1a;
+  --warn:#f59e0b;--warn-hl:#2e2010;
+  --error:#e57373;--error-hl:#2e1a1a;
+  --info:#64b5f6;--info-hl:#1a2a3e;
+  --shadow:0 1px 3px rgba(0,0,0,.3);--shadow-md:0 4px 12px rgba(0,0,0,.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:none;-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+body{font-family:'Noto Sans HK',sans-serif;font-size:var(--base);color:var(--text);background:var(--bg);min-height:100dvh;line-height:1.6}
+button{cursor:pointer;font-family:inherit}input,select{font-family:inherit}
+table{border-collapse:collapse;width:100%}
+
+/* LOGIN */
+#loginScreen{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);box-shadow:var(--shadow-md);padding:40px 32px;width:100%;max-width:360px;text-align:center;}
+.login-logo{font-size:2.5rem;margin-bottom:12px;}
+.login-title{font-size:var(--xl);font-weight:700;margin-bottom:4px;}
+.login-sub{font-size:var(--sm);color:var(--muted);margin-bottom:28px;}
+.login-err{background:var(--error-hl);color:var(--error);border:1px solid var(--error);border-radius:var(--r);padding:8px 12px;font-size:var(--sm);margin-bottom:12px;display:none;}
+
+/* HEADER */
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+.hdr-logo{display:flex;align-items:center;gap:10px}
+.hdr-title{font-size:var(--lg);font-weight:700}
+.hdr-sub{font-size:var(--xs);color:var(--muted)}
+.hdr-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* LAYOUT */
+.wrap{max-width:1440px;margin:0 auto;padding:20px}
+.grid2{display:grid;grid-template-columns:1fr 340px;gap:20px}
+@media(max-width:1100px){.grid2{grid-template-columns:1fr}}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);box-shadow:var(--shadow);overflow:hidden;margin-bottom:20px}
+.card-hdr{padding:14px 18px;border-bottom:1px solid var(--divider);display:flex;align-items:center;justify-content:space-between;background:var(--surface2)}
+.card-title{font-size:var(--base);font-weight:600;display:flex;align-items:center;gap:8px}
+.card-body{padding:18px}
+
+/* RESIDENT STOCK CARDS */
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:20px}
+.res-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--rl);padding:16px;box-shadow:var(--shadow);transition:border-color .2s}
+.res-card.ok{border-color:var(--success)}
+.res-card.warn{border-color:var(--warn)}
+.res-card.danger{border-color:var(--error)}
+.res-card.discharged{opacity:.5;border-color:var(--border)}
+.res-name{font-size:var(--base);font-weight:700;margin-bottom:2px}
+.res-detail{font-size:var(--xs);color:var(--muted);margin-bottom:8px}
+.res-stock-num{font-size:var(--xl);font-weight:700;font-variant-numeric:tabular-nums}
+.res-bar-bg{background:var(--offset);border-radius:99px;height:5px;overflow:hidden;margin:6px 0 4px}
+.res-bar{height:100%;border-radius:99px;transition:width .5s}
+.bar-ok{background:var(--success)}.bar-warn{background:var(--warn)}.bar-danger{background:var(--error)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r);font-size:var(--sm);font-weight:500;border:1px solid transparent;transition:all .15s;line-height:1.4}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-h)}
+.btn-secondary{background:var(--surface);border-color:var(--border);color:var(--text)}.btn-secondary:hover{background:var(--offset)}
+.btn-success{background:var(--success);color:#fff}.btn-success:hover{background:#1b5e20}
+.btn-sm{padding:4px 10px;font-size:var(--xs)}
+.btn-icon{padding:6px;width:30px;height:30px;justify-content:center}
+.btn-delivery{background:var(--success);color:#fff;font-weight:700}
+.btn-delivery:hover{background:#1b5e20}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+th{background:var(--surface2);padding:8px 12px;font-size:var(--xs);font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+td{padding:8px 12px;font-size:var(--sm);border-bottom:1px solid var(--divider);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--offset)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:99px;font-size:var(--xs);font-weight:600}
+.b-active{background:var(--success-hl);color:var(--success)}
+.b-admitted{background:var(--warn-hl);color:var(--warn)}
+.b-delivery{background:var(--success-hl);color:var(--success)}
+.b-order{background:var(--info-hl);color:var(--info)}
+.bonus-tag{display:inline-flex;align-items:center;background:var(--success-hl);color:var(--success);border:1px solid var(--success);border-radius:99px;padding:1px 7px;font-size:var(--xs);font-weight:600;margin-left:4px}
+
+/* FORM */
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.frow{grid-template-columns:1fr}}
+.ff{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.ff label{font-size:var(--xs);font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.ff input,.ff select{padding:8px 12px;border:1px solid var(--border);border-radius:var(--r);font-size:var(--sm);background:var(--surface);color:var(--text);transition:border-color .15s}
+.ff input:focus,.ff select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 18%,transparent)}
+
+/* ALERTS */
+.alert{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-radius:var(--r);margin-bottom:10px;font-size:var(--sm)}
+.a-warn{background:var(--warn-hl);color:var(--warn);border:1px solid var(--warn)}
+.a-danger{background:var(--error-hl);color:var(--error);border:1px solid var(--error)}
+.a-info{background:var(--info-hl);color:var(--info);border:1px solid var(--info)}
+.a-success{background:var(--success-hl);color:var(--success);border:1px solid var(--success)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.5);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .15s}
+.overlay.open{opacity:1;pointer-events:auto}
+.modal{background:var(--surface);border-radius:var(--rl);box-shadow:0 20px 60px rgba(0,0,0,.2);width:100%;max-width:520px;max-height:90dvh;overflow-y:auto;transform:translateY(12px);transition:transform .2s ease}
+.overlay.open .modal{transform:translateY(0)}
+.m-hdr{padding:14px 18px;border-bottom:1px solid var(--divider);display:flex;align-items:center;justify-content:space-between}
+.m-title{font-size:var(--lg);font-weight:700}
+.m-body{padding:18px}
+.m-foot{padding:10px 18px;border-top:1px solid var(--divider);display:flex;gap:10px;justify-content:flex-end}
+
+.delivery-preview{background:var(--success-hl);border:1px solid var(--success);border-radius:var(--r);padding:10px 14px;margin-top:8px;font-size:var(--sm)}
+.delivery-preview strong{color:var(--success)}
+
+.theme-btn{background:var(--offset);border:1px solid var(--border);border-radius:99px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:all .15s}
+.theme-btn:hover{background:var(--border)}
+
+/* ORDER SCHEDULE */
+.schedule-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:var(--r);margin-bottom:8px;font-size:var(--sm)}
+.si-today{background:var(--error-hl);border:1px solid var(--error)}
+.si-soon{background:var(--warn-hl)}
+.si-normal{background:var(--offset)}
+
+/* ORDER BANNER */
+.order-banner{background:linear-gradient(135deg,var(--primary-hl),var(--surface));border:2px solid var(--primary);border-radius:var(--rl);padding:14px 18px;margin-bottom:20px}
+.order-banner-title{font-weight:700;color:var(--primary);font-size:var(--lg);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.chip{padding:3px 12px;border-radius:99px;font-size:var(--xs);font-weight:600;color:#fff}
+.chip-today{background:var(--error);animation:pulse 2s infinite}
+.chip-soon{background:var(--warn)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+
+@media(max-width:600px){.wrap{padding:12px}}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script>
+function doLogin(){
+  var u=document.getElementById('loginUser').value.trim();
+  var p=document.getElementById('loginPass').value;
+  if(u==='ivan' && p==='1234'){
+    document.getElementById('loginScreen').style.display='none';
+  } else {
+    var err=document.getElementById('loginErr');
+    err.style.display='block';
+    setTimeout(function(){err.style.display='none';},3000);
+  }
+}
+</script>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">🏥</div>
+    <div class="login-title">C區倉存管理系統</div>
+    <div class="login-sub">請輸入登入資料</div>
+    <div class="login-err" id="loginErr">那是別人的密碼吧？ ( ͡° ͜ʖ ͡°)</div>
+    <div class="ff" style="text-align:left">
+      <label>用戶ID</label>
+      <input type="text" id="loginUser" placeholder="輸入ID" autocomplete="username"/>
+    </div>
+    <div class="ff" style="text-align:left;margin-top:8px">
+      <label>密碼</label>
+      <input type="password" id="loginPass" placeholder="輸入密碼" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:16px;justify-content:center" onclick="doLogin()">登入</button>
+  </div>
+</div>
+
+<header class="hdr">
+  <div class="hdr-logo">
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+      <rect width="36" height="36" rx="8" fill="var(--primary)"/>
+      <rect x="7" y="9" width="22" height="3" rx="1.5" fill="white" opacity=".9"/>
+      <rect x="7" y="15" width="15" height="3" rx="1.5" fill="white" opacity=".7"/>
+      <rect x="7" y="21" width="18" height="3" rx="1.5" fill="white" opacity=".5"/>
+    </svg>
+    <div>
+      <div class="hdr-title">C區倉存管理系統</div>
+      <div class="hdr-sub" id="todayTxt"></div>
+      <div style="font-size:var(--xs);color:var(--primary)" id="firebaseStatus">☁️ 連接中...</div>
+    </div>
+  </div>
+  <div class="hdr-actions">
+    <button class="btn btn-delivery btn-sm" onclick="openDeliveryModal()">📦 登記到貨（跟人）</button>
+    <button class="btn btn-primary btn-sm" onclick="openAddResident()">+ 新增院友</button>
+    <button class="btn btn-secondary btn-sm" onclick="exportData()">⬇️ 匯出備份</button>
+    <button class="btn btn-secondary btn-sm" onclick="importData()">⬆️ 匯入備份</button>
+    <button class="btn btn-secondary btn-sm" onclick="clearData()">🗑️ 清除資料</button>
+    <button class="theme-btn" data-theme-toggle aria-label="切換主題">🌙</button>
+  </div>
+</header>
+
+<input type="file" id="importInput" accept=".json" style="display:none" onchange="handleImport(event)"/>
+
+<main class="wrap">
+  <div id="orderBanner" class="order-banner" style="display:none">
+    <div class="order-banner-title" id="bannerTitle">🗓️ 訂貨提示</div>
+    <div id="bannerText"></div>
+    <div class="chips" id="bannerChips"></div>
+  </div>
+
+  <div id="alertArea"></div>
+
+  <!-- PER RESIDENT STOCK CARDS -->
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-title">📦 各院友個人庫存</div>
+      <span style="font-size:var(--xs);color:var(--muted)" id="lastUpdated"></span>
+    </div>
+    <div class="card-body">
+      <div class="res-grid" id="resGrid"><p style="color:var(--muted)">請先新增院友</p></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <!-- RESIDENTS TABLE -->
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">👥 院友資料</div>
+          <button class="btn btn-primary btn-sm" onclick="openAddResident()">+ 新增院友</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>院友姓名</th><th>床號</th><th>品牌</th>
+              <th>每日支數</th><th>個人庫存</th><th>可用天數</th><th>狀態</th><th>操作</th>
+            </tr></thead>
+            <tbody id="residentTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DELIVERY LOG -->
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">📋 到貨記錄</div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr>
+              <th>日期</th><th>院友</th><th>品牌</th><th>箱數</th><th>支數</th><th>贈品</th><th>庫存變化</th><th>備註</th><th></th>
+            </tr></thead>
+            <tbody id="logTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">🗓️ 訂貨日程</div>
+          <span style="font-size:var(--xs);color:var(--muted)">每月第1、3星期一</span>
+        </div>
+        <div class="card-body" style="padding:12px" id="scheduleBody"></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-title">⚠️ 低庫存警示</div></div>
+        <div class="card-body" id="lowStockBody"><p style="color:var(--muted);font-size:var(--sm)">暫無警示</p></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- DELIVERY MODAL -->
+<div class="overlay" id="deliveryModal">
+  <div class="modal">
+    <div class="m-hdr">
+      <div class="m-title">📦 登記到貨（跟人）</div>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="closeModal('deliveryModal')">✕</button>
+    </div>
+    <div class="m-body">
+      <div class="ff">
+        <label>院友 *</label>
+        <select id="dResident" onchange="updateDeliveryPreview()"></select>
+      </div>
+      <div class="frow">
+        <div class="ff">
+          <label>品牌 *</label>
+          <select id="dBrand" onchange="updateDeliveryPreview()">
+            <option value="Ultracal">Ultracal</option>
+            <option value="Isocal HN">Isocal HN</option>
+            <option value="Fresubin">Fresubin ⭐ 買1箱送4支</option>
+            <option value="Isosource">Isosource</option>
+            <option value="Compleat">Compleat</option>
+          </select>
+        </div>
+        <div class="ff">
+          <label>到貨日期 *</label>
+          <input type="date" id="dDate"/>
+        </div>
+      </div>
+      <div class="ff">
+        <label>收到箱數 *</label>
+        <input type="number" id="dBoxes" min="1" value="1" oninput="updateDeliveryPreview()"/>
+      </div>
+      <div id="deliveryPreview" class="delivery-preview" style="display:none"></div>
+      <div class="ff" style="margin-top:12px">
+        <label>備註（選填）</label>
+        <input type="text" id="dNote" placeholder="例：供應商、批次號…"/>
+      </div>
+    </div>
+    <div class="m-foot">
+      <button class="btn btn-secondary" onclick="closeModal('deliveryModal')">取消</button>
+      <button class="btn btn-delivery" onclick="confirmDelivery()">✅ 確認到貨，加入個人庫存</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESIDENT MODAL -->
+<div class="overlay" id="residentModal">
+  <div class="modal">
+    <div class="m-hdr">
+      <div class="m-title" id="residentModalTitle">新增院友</div>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="closeModal('residentModal')">✕</button>
+    </div>
+    <div class="m-body">
+      <input type="hidden" id="editRId"/>
+      <div class="frow">
+        <div class="ff"><label>院友姓名 *</label><input type="text" id="rName" placeholder="例：陳大文"/></div>
+        <div class="ff"><label>床號</label><input type="text" id="rBed" placeholder="例：C01"/></div>
+      </div>
+      <div class="frow">
+        <div class="ff">
+          <label>奶水品牌 *</label>
+          <select id="rBrand">
+            <option value="Ultracal">Ultracal (250ml/支)</option>
+            <option value="Isocal HN">Isocal HN (250ml/支)</option>
+            <option value="Fresubin">Fresubin (200ml/支)</option>
+            <option value="Isosource">Isosource (250ml/支)</option>
+            <option value="Compleat">Compleat (250ml/支)</option>
+          </select>
+        </div>
+        <div class="ff"><label>每日支數 *</label><input type="number" id="rUnits" min="1" step="0.5" placeholder="例：4"/></div>
+      </div>
+      <div class="frow">
+        <div class="ff"><label>現有庫存（支）</label><input type="number" id="rStock" min="0" value="0" placeholder="0"/></div>
+        <div class="ff"><label>入院日期</label><input type="date" id="rAdmit"/></div>
+      </div>
+      <div class="frow">
+        <div class="ff"><label>出院日期（如已出院）</label><input type="date" id="rDischarge"/></div>
+        <div class="ff"><label>備註</label><input type="text" id="rNote" placeholder="選填"/></div>
+      </div>
+    </div>
+    <div class="m-foot">
+      <button class="btn btn-secondary" onclick="closeModal('residentModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveResident()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── FIREBASE ─────────────────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyAF5EU0i4iVN_5zC7vvwsqediY_U59540I",
+  authDomain: "ng-tube-manager.firebaseapp.com",
+  databaseURL: "https://ng-tube-manager-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "ng-tube-manager",
+  storageBucket: "ng-tube-manager.firebasestorage.app",
+  messagingSenderId: "771151519253",
+  appId: "1:771151519253:web:d2a3b4635d388f054af81c"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const DB_PATH = 'c_ward_stock_v1';
+let isSyncing = false;
+
+function pushToFirebase() {
+  if (isSyncing) return;
+  db.ref(DB_PATH).set({ residents, logs, nid, updatedAt: Date.now() }).catch(e => console.warn(e));
+}
+
+function listenFirebase() {
+  db.ref(DB_PATH).on('value', snapshot => {
+    const data = snapshot.val();
+    if (!data) return;
+    isSyncing = true;
+    residents = Array.isArray(data.residents) ? data.residents : residents;
+    logs = Array.isArray(data.logs) ? data.logs : logs;
+    nid = Number.isFinite(data.nid) ? data.nid : nid;
+    saveState(); renderAll(); showSyncBadge();
+    isSyncing = false;
+  });
+}
+
+function updateFirebaseStatus(ok) {
+  const el = document.getElementById('firebaseStatus');
+  if (el) { el.textContent = ok ? '☁️ 已連接 Firebase' : '⚠️ 離線模式'; el.style.color = ok ? 'var(--success)' : 'var(--warn)'; }
+}
+db.ref('.info/connected').on('value', snap => updateFirebaseStatus(snap.val() === true));
+
+function showSyncBadge() {
+  const existing = document.getElementById('syncBadge');
+  if (existing) existing.remove();
+  const badge = document.createElement('div');
+  badge.id = 'syncBadge';
+  badge.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:9999;background:#2e7d32;color:#fff;padding:6px 14px;border-radius:99px;font-size:0.8rem;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.2);';
+  badge.textContent = '☁️ 已同步';
+  document.body.appendChild(badge);
+  setTimeout(() => badge.remove(), 2500);
+}
+
+
+// ─── BRAND CONFIG ─────────────────────────────────────────────────────────────
+const BRANDS = {
+  "Ultracal":  {ml:250, perBox:24, bonus:0, color:"#0b7a8a"},
+  "Isocal HN": {ml:250, perBox:24, bonus:0, color:"#1565c0"},
+  "Fresubin":  {ml:200, perBox:24, bonus:4, color:"#2e7d32"},
+  "Isosource": {ml:250, perBox:24, bonus:0, color:"#b45309"},
+  "Compleat":  {ml:250, perBox:24, bonus:0, color:"#7b1fa2"}
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+// Each resident has: id, name, bed, brand, units(per day), stock(personal bottles), admitDate, dischargeDate, note
+let residents = [];
+let logs = []; // {id, date, residentId, residentName, brand, boxes, units, bonus, note}
+let nid = 1;
+const STORAGE_KEY = 'c_ward_stock_v1';
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ residents, logs, nid })); } catch(e) {}
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    residents = Array.isArray(data.residents) ? data.residents : [];
+    logs = Array.isArray(data.logs) ? data.logs : [];
+    nid = Number.isFinite(data.nid) ? data.nid : 1;
+  } catch(e) {}
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function today0() { const d = new Date(); d.setHours(0,0,0,0); return d; }
+function parseD(s) { if(!s) return null; const d = new Date(s+'T00:00:00'); return isNaN(d)?null:d; }
+function isHospitalized(r) {
+  const t=today0(), admit=parseD(r.admitDate), disch=parseD(r.dischargeDate);
+  if(!admit||admit>t) return false;
+  if(disch&&disch<=t) return false;
+  return true;
+}
+function isDischarged(r) {
+  const t=today0(), disch=parseD(r.dischargeDate);
+  return disch && disch <= t;
+}
+function daysLeftRes(r) {
+  const d = r.units || 0;
+  return d <= 0 ? Infinity : Math.floor((r.stock||0) / d);
+}
+function fmtDate(s) { return new Date(s+'T00:00:00').toLocaleDateString('zh-HK',{year:'numeric',month:'short',day:'numeric'}); }
+
+// ─── ORDER SCHEDULE ───────────────────────────────────────────────────────────
+function orderMondays(year, month) {
+  const res=[]; let cnt=0;
+  for(let d=1;d<=31;d++){const dt=new Date(year,month,d);if(dt.getMonth()!==month)break;if(dt.getDay()===1){cnt++;if(cnt===1||cnt===3)res.push(new Date(dt));}}
+  return res;
+}
+function upcomingOrderDays(n=3) {
+  const t=today0(); const res=[];
+  for(let m=0;m<n;m++){const base=new Date(t.getFullYear(),t.getMonth()+m,1);orderMondays(base.getFullYear(),base.getMonth()).forEach(d=>{if(d>=t)res.push(d);});}
+  return res;
+}
+function nthLabel(date) {
+  const ms=orderMondays(date.getFullYear(),date.getMonth());
+  return ms.findIndex(d=>d.getTime()===date.getTime())===0?'第1星期一':'第3星期一';
+}
+
+// ─── RENDER ALL ───────────────────────────────────────────────────────────────
+function renderAll() {
+  renderResGrid();
+  renderResidentTable();
+  renderLogTable();
+  renderAlerts();
+  renderSchedule();
+  renderLowStock();
+  renderBanner();
+  document.getElementById('lastUpdated').textContent = '更新：'+new Date().toLocaleTimeString('zh-HK',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ─── RESIDENT STOCK CARDS ─────────────────────────────────────────────────────
+function renderResGrid() {
+  const grid = document.getElementById('resGrid');
+  const active = residents.filter(r => !isDischarged(r));
+  if (!active.length) { grid.innerHTML = '<p style="color:var(--muted)">請先新增院友</p>'; return; }
+  grid.innerHTML = '';
+  active.forEach(r => {
+    const cfg = BRANDS[r.brand] || {ml:250,perBox:24,bonus:0,color:'#888'};
+    const stock = r.stock || 0;
+    const daily = r.units || 0;
+    const days = daysLeftRes(r);
+    const hospitalized = isHospitalized(r);
+    const status = hospitalized ? 'warn' : (days < 7 ? 'danger' : days < 14 ? 'warn' : 'ok');
+    const maxS = Math.max(stock, daily*14, 10);
+    const pct = Math.min(100, Math.round(stock/maxS*100));
+    const div = document.createElement('div');
+    div.className = 'res-card ' + (isDischarged(r) ? 'discharged' : status);
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="res-name" style="color:${cfg.color}">${r.name}</div>
+          <div class="res-detail">${r.bed ? '床號：'+r.bed+' · ' : ''}${r.brand} · ${cfg.ml}ml/支 · ${daily}支/日</div>
+        </div>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-delivery btn-sm" onclick="quickDeliveryFor(${r.id})" title="登記到貨">📦+</button>
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="editResident(${r.id})">✏️</button>
+        </div>
+      </div>
+      ${hospitalized ? '<div class="badge b-admitted" style="margin-bottom:6px">🏥 住院中（消耗暫停）</div>' : ''}
+      <div style="display:flex;align-items:baseline;gap:6px;margin:4px 0 2px">
+        <span class="res-stock-num" style="color:${cfg.color}">${stock}</span>
+        <span style="font-size:var(--xs);color:var(--muted)">支現存</span>
+        ${days !== Infinity ? `<span style="font-size:var(--xs);font-weight:600;color:${days<7?'var(--error)':days<14?'var(--warn)':'var(--success)'};margin-left:auto">${days} 日</span>` : ''}
+      </div>
+      <div class="res-bar-bg"><div class="res-bar bar-${status}" style="width:${pct}%"></div></div>
+      <div style="font-size:var(--xs);color:var(--muted);margin-top:4px">安全水平：<input type="number" min="0" value="${r.safetyStock||0}" onchange="updateResSafety(${r.id},this.value)" style="width:44px;padding:1px 4px;border:1px solid var(--border);border-radius:4px;font-size:var(--xs);background:var(--surface);color:var(--text)"/> 支</div>
+    `;
+    grid.appendChild(div);
+  });
+}
+
+function updateResSafety(id, val) {
+  const r = residents.find(x=>x.id===id);
+  if (r) { r.safetyStock = Math.max(0, parseFloat(val)||0); saveState(); pushToFirebase(); renderAll(); }
+}
+
+// ─── RESIDENT TABLE ───────────────────────────────────────────────────────────
+function renderResidentTable() {
+  const tbody = document.getElementById('residentTbody');
+  if (!residents.length) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--muted)">暫無院友記錄</td></tr>'; return; }
+  tbody.innerHTML = '';
+  residents.forEach(r => {
+    const cfg = BRANDS[r.brand] || {};
+    const days = daysLeftRes(r);
+    const hosp = isHospitalized(r);
+    const disch = isDischarged(r);
+    const tr = document.createElement('tr');
+    if (disch) tr.style.opacity = '.5';
+    tr.innerHTML = `
+      <td><strong>${r.name}</strong>${r.note?'<br><small style="color:var(--muted)">'+r.note+'</small>':''}</td>
+      <td>${r.bed||'—'}</td>
+      <td style="font-weight:600;color:${cfg.color||'inherit'}">${r.brand}</td>
+      <td>${r.units} 支</td>
+      <td style="font-weight:700;color:${cfg.color||'inherit'}">${r.stock||0} 支</td>
+      <td>${days===Infinity?'—':'<span style="font-weight:600;color:'+(days<7?'var(--error)':days<14?'var(--warn)':'var(--success')')+'">'+ days +' 日</span>'}</td>
+      <td>${disch?'<span class="badge" style="background:var(--offset)">已出院</span>':hosp?'<span class="badge b-admitted">🏥 住院中</span>':'<span class="badge b-active">✅ 在院</span>'}</td>
+      <td><div style="display:flex;gap:4px">
+        <button class="btn btn-delivery btn-sm" onclick="quickDeliveryFor(${r.id})">📦+</button>
+        <button class="btn btn-secondary btn-sm btn-icon" onclick="editResident(${r.id})">✏️</button>
+        <button class="btn btn-secondary btn-sm btn-icon" onclick="delResident(${r.id})" style="color:var(--error)">🗑️</button>
+      </div></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ─── LOG TABLE ────────────────────────────────────────────────────────────────
+function renderLogTable() {
+  const tbody = document.getElementById('logTbody');
+  if (!logs.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--muted)">暫無記錄</td></tr>'; return; }
+  tbody.innerHTML = '';
+  [...logs].sort((a,b) => new Date(b.date)-new Date(a.date)).forEach(o => {
+    const cfg = BRANDS[o.brand] || {};
+    const bonus = o.bonus || 0;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${fmtDate(o.date)}</td>
+      <td><strong>${o.residentName||'—'}</strong>${o.residentBed?' <small style="color:var(--muted)">('+ o.residentBed +')</small>':''}</td>
+      <td style="font-weight:600;color:${cfg.color||'inherit'}">${o.brand}</td>
+      <td>${o.boxes} 箱</td>
+      <td>${o.units} 支</td>
+      <td>${bonus>0?'<span class="bonus-tag">+'+bonus+'</span>':'—'}</td>
+      <td style="color:var(--success);font-weight:600">＋${o.units+bonus} 支</td>
+      <td style="color:var(--muted)">${o.note||'—'}</td>
+      <td><button class="btn btn-secondary btn-sm btn-icon" onclick="delLog(${o.id})" style="color:var(--error)">🗑️</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ─── ALERTS & LOW STOCK ───────────────────────────────────────────────────────
+function renderAlerts() {
+  const area = document.getElementById('alertArea');
+  area.innerHTML = '';
+  const hosp = residents.filter(r => isHospitalized(r));
+  if (hosp.length) area.innerHTML += `<div class="alert a-info">🏥 <div><strong>${hosp.length} 名院友住院中</strong>（${hosp.map(r=>r.name).join('、')}），奶水消耗已暫停計算。</div></div>`;
+}
+
+function renderLowStock() {
+  const body = document.getElementById('lowStockBody');
+  const active = residents.filter(r => !isDischarged(r) && !isHospitalized(r));
+  const low = active.filter(r => {
+    const days = daysLeftRes(r);
+    const safety = r.safetyStock || 0;
+    return (r.stock||0) <= safety || days < 7;
+  });
+  if (!low.length) { body.innerHTML = '<p style="color:var(--success);font-size:var(--sm)">✅ 所有院友庫存正常</p>'; return; }
+  body.innerHTML = low.map(r => {
+    const days = daysLeftRes(r);
+    return `<div class="alert ${days<3?'a-danger':'a-warn'}" style="margin-bottom:8px">
+      ${days<3?'🔴':'⚠️'} <div><strong>${r.name}</strong>（${r.brand}）只剩 <strong>${r.stock||0} 支</strong>，約 ${days===Infinity?'—':days+' 日'}。</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── BANNER ───────────────────────────────────────────────────────────────────
+function renderBanner() {
+  const t=today0(), upcoming=upcomingOrderDays(2);
+  const banner=document.getElementById('orderBanner');
+  const todayOnes=upcoming.filter(d=>d.getTime()===t.getTime());
+  const soonOnes=upcoming.filter(d=>{const diff=Math.round((d-t)/86400000);return diff>0&&diff<=3;});
+  if(todayOnes.length){
+    banner.style.display='';
+    document.getElementById('bannerTitle').textContent='🚨 今天是訂貨日！';
+    document.getElementById('bannerText').innerHTML='<strong>請今天下單訂購奶水。</strong>';
+    document.getElementById('bannerChips').innerHTML=todayOnes.map(d=>`<span class="chip chip-today">今日 ${d.toLocaleDateString('zh-HK',{month:'long',day:'numeric'})}</span>`).join('');
+  } else if(soonOnes.length){
+    banner.style.display='';
+    document.getElementById('bannerTitle').textContent='🗓️ 訂貨日即將到來';
+    document.getElementById('bannerText').textContent='請提前準備訂貨資料。';
+    document.getElementById('bannerChips').innerHTML=soonOnes.map(d=>{const diff=Math.round((d-t)/86400000);return`<span class="chip chip-soon">${d.toLocaleDateString('zh-HK',{month:'long',day:'numeric',weekday:'short'})} (${diff}日後)</span>`;}).join('');
+  } else banner.style.display='none';
+}
+
+// ─── SCHEDULE ─────────────────────────────────────────────────────────────────
+function renderSchedule() {
+  const body=document.getElementById('scheduleBody'), t=today0(), upcoming=upcomingOrderDays(3);
+  body.innerHTML='';
+  upcoming.slice(0,6).forEach(day=>{
+    const diff=Math.round((day-t)/86400000);
+    const cls=diff===0?'si-today':diff<=3?'si-soon':'si-normal';
+    const item=document.createElement('div');
+    item.className='schedule-item '+cls;
+    item.innerHTML=`<span>${day.toLocaleDateString('zh-HK',{month:'long',day:'numeric',weekday:'short'})} <small style="color:var(--muted)">${nthLabel(day)}</small></span>
+      <span class="badge ${diff===0?'b-admitted':diff<=3?'b-admitted':'b-active'}">${diff===0?'今天!':diff+'日後'}</span>`;
+    body.appendChild(item);
+  });
+}
+
+// ─── DELIVERY MODAL ───────────────────────────────────────────────────────────
+function openDeliveryModal(preselectId) {
+  const sel = document.getElementById('dResident');
+  sel.innerHTML = '';
+  residents.filter(r=>!isDischarged(r)).forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.id;
+    opt.textContent = r.name + (r.bed?' ('+r.bed+')':'')+' — '+r.brand;
+    if (preselectId && r.id === preselectId) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  // Auto-set brand from selected resident
+  sel.onchange = () => {
+    const r = residents.find(x=>x.id===parseInt(sel.value));
+    if (r) document.getElementById('dBrand').value = r.brand;
+    updateDeliveryPreview();
+  };
+  if (preselectId) {
+    const r = residents.find(x=>x.id===preselectId);
+    if (r) document.getElementById('dBrand').value = r.brand;
+  }
+  document.getElementById('dDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('dBoxes').value = 1;
+  updateDeliveryPreview();
+  document.getElementById('deliveryModal').classList.add('open');
+}
+
+function quickDeliveryFor(residentId) {
+  openDeliveryModal(residentId);
+}
+
+function updateDeliveryPreview() {
+  const brand = document.getElementById('dBrand').value;
+  const boxes = parseFloat(document.getElementById('dBoxes').value)||0;
+  const cfg = BRANDS[brand];
+  if (!cfg || boxes<=0) { document.getElementById('deliveryPreview').style.display='none'; return; }
+  const units = boxes * cfg.perBox;
+  const bonus = boxes * cfg.bonus;
+  const net = units + bonus;
+  const prev = document.getElementById('deliveryPreview');
+  prev.style.display = '';
+  prev.innerHTML = `${boxes} 箱 × ${cfg.perBox} 支 = <strong>${units} 支</strong>${bonus>0?' + 贈品 <strong>'+bonus+' 支</strong> = 共 <strong>'+net+' 支</strong>':''} 加入個人庫存`;
+}
+
+function confirmDelivery() {
+  const resId = parseInt(document.getElementById('dResident').value);
+  const brand = document.getElementById('dBrand').value;
+  const date = document.getElementById('dDate').value;
+  const boxes = parseFloat(document.getElementById('dBoxes').value)||0;
+  const note = document.getElementById('dNote').value.trim();
+  if (!resId||!brand||!date||boxes<=0) { alert('請填寫所有必填項目'); return; }
+  const r = residents.find(x=>x.id===resId);
+  if (!r) return;
+  const cfg = BRANDS[brand];
+  const units = boxes * cfg.perBox;
+  const bonus = boxes * (cfg.bonus||0);
+  const net = units + bonus;
+  const before = r.stock || 0;
+  r.stock = before + net;
+  r.brand = brand; // update brand if changed
+  logs.push({id:nid++, date, residentId:resId, residentName:r.name, residentBed:r.bed||'', brand, boxes, units, bonus, note:note||('到貨，庫存：'+before+'→'+r.stock)});
+  saveState(); pushToFirebase(); renderAll(); closeModal('deliveryModal');
+  const msg = document.createElement('div');
+  msg.className = 'alert a-success';
+  msg.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;min-width:260px;box-shadow:var(--shadow-md)';
+  msg.innerHTML = `✅ <strong>${r.name}</strong> 收到 ${brand} ${boxes} 箱（${net} 支），現有 <strong>${r.stock} 支</strong>`;
+  document.body.appendChild(msg);
+  setTimeout(()=>msg.remove(), 3500);
+}
+
+// ─── RESIDENT CRUD ────────────────────────────────────────────────────────────
+function openAddResident() {
+  document.getElementById('residentModalTitle').textContent = '新增院友';
+  document.getElementById('editRId').value = '';
+  document.getElementById('rName').value = '';
+  document.getElementById('rBed').value = '';
+  document.getElementById('rBrand').value = 'Ultracal';
+  document.getElementById('rUnits').value = '';
+  document.getElementById('rStock').value = '0';
+  document.getElementById('rAdmit').value = '';
+  document.getElementById('rDischarge').value = '';
+  document.getElementById('rNote').value = '';
+  document.getElementById('residentModal').classList.add('open');
+}
+
+function editResident(id) {
+  const r = residents.find(x=>x.id===id);
+  if (!r) return;
+  document.getElementById('residentModalTitle').textContent = '編輯院友';
+  document.getElementById('editRId').value = id;
+  document.getElementById('rName').value = r.name;
+  document.getElementById('rBed').value = r.bed||''
+  document.getElementById('rBrand').value = r.brand;
+  document.getElementById('rUnits').value = r.units;
+  document.getElementById('rStock').value = r.stock||0;
+  document.getElementById('rAdmit').value = r.admitDate||''
+  document.getElementById('rDischarge').value = r.dischargeDate||''
+  document.getElementById('rNote').value = r.note||''
+  document.getElementById('residentModal').classList.add('open');
+}
+
+function saveResident() {
+  const name = document.getElementById('rName').value.trim();
+  const units = parseFloat(document.getElementById('rUnits').value);
+  if (!name||!units) { alert('請填寫姓名及每日支數'); return; }
+  const editId = document.getElementById('editRId').value;
+  const data = {
+    name, bed: document.getElementById('rBed').value.trim(),
+    brand: document.getElementById('rBrand').value, units,
+    stock: parseFloat(document.getElementById('rStock').value)||0,
+    admitDate: document.getElementById('rAdmit').value||null,
+    dischargeDate: document.getElementById('rDischarge').value||null,
+    note: document.getElementById('rNote').value.trim()
+  };
+  if (editId) {
+    const idx = residents.findIndex(x=>x.id===parseInt(editId));
+    if (idx>=0) { residents[idx] = {...residents[idx], ...data}; }
+  } else {
+    residents.push({id:nid++, safetyStock:0, ...data});
+  }
+  saveState(); pushToFirebase(); renderAll(); closeModal('residentModal');
+}
+
+function delResident(id) {
+  if (!confirm('確定刪除此院友記錄？')) return;
+  residents = residents.filter(x=>x.id!==id);
+  saveState(); pushToFirebase(); renderAll();
+}
+
+function delLog(id) {
+  if (!confirm('確定刪除此記錄？')) return;
+  logs = logs.filter(x=>x.id!==id);
+  saveState(); pushToFirebase(); renderAll();
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.overlay').forEach(el => el.addEventListener('click', e => { if(e.target===el) el.classList.remove('open'); }));
+
+// ─── EXPORT / IMPORT ─────────────────────────────────────────────────────────
+function exportData() {
+  const data = JSON.stringify({residents,logs,nid,exportedAt:new Date().toISOString()},null,2);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([data],{type:'application/json'}));
+  a.download = 'c_ward_backup_'+new Date().toISOString().split('T')[0]+'.json';
+  a.click();
+}
+function importData() { document.getElementById('importInput').click(); }
+function handleImport(e) {
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      residents = Array.isArray(data.residents)?data.residents:[];
+      logs = Array.isArray(data.logs)?data.logs:[];
+      nid = Number.isFinite(data.nid)?data.nid:1;
+      saveState(); pushToFirebase(); renderAll(); alert('匯入成功！');
+    } catch(err) { alert('檔案格式錯誤'); }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+function clearData() {
+  if(!confirm('確定清除所有資料？此操作不可撤銷！'))return;
+  residents=[]; logs=[]; nid=1;
+  saveState(); pushToFirebase(); renderAll();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+(function(){
+  const today = new Date();
+  document.getElementById('todayTxt').textContent = today.toLocaleDateString('zh-HK',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+  const btn = document.querySelector('[data-theme-toggle]');
+  const root = document.documentElement;
+  let theme = matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+  root.setAttribute('data-theme',theme);
+  btn.textContent = theme==='dark'?'☀️':'🌙';
+  btn.addEventListener('click',()=>{theme=theme==='dark'?'light':'dark';root.setAttribute('data-theme',theme);btn.textContent=theme==='dark'?'☀️':'🌙';});
+  loadState();
+  listenFirebase();
+  renderAll();
+  setInterval(renderAll,60000);
+})();
+</script>
+</body>
+</html>
