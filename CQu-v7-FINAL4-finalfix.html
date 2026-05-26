@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>C區倉存管理</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif}
+body{background:#EBF3FC;min-height:100vh}
+#LP{display:flex;align-items:center;justify-content:center;min-height:100vh}
+.lb{background:#fff;border-radius:16px;padding:40px 28px;width:300px;text-align:center;box-shadow:0 4px 24px rgba(31,78,120,.13)}
+.lb h2{color:#1F4E78;margin-bottom:22px;font-size:20px}
+.lb input{width:100%;padding:9px 12px;margin-bottom:10px;border:1.5px solid #D0DFF0;border-radius:7px;font-size:14px;outline:none;display:block}
+.lb input:focus{border-color:#2E75B6}
+#lbtn{width:100%;padding:10px;background:#1F4E78;color:#fff;border:none;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer}
+#lerr{color:#C00000;font-size:12px;margin-top:7px;min-height:16px}
+#APP{display:none}
+header{background:linear-gradient(90deg,#1F4E78,#2E75B6);color:#fff;padding:0 18px;height:52px;display:flex;align-items:center;justify-content:space-between}
+header h1{font-size:15px;font-weight:700}
+.hr{display:flex;align-items:center;gap:9px;font-size:12px}
+.hbtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:3px 11px;border-radius:16px;cursor:pointer;font-size:11px}
+nav{background:#fff;border-bottom:2px solid #D0DFF0;display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 10px}
+.nt{padding:10px 13px;cursor:pointer;border-bottom:3px solid transparent;font-size:13px;font-weight:500;white-space:nowrap;color:#777;user-select:none}
+.nt.on{color:#1F4E78;border-bottom-color:#1F4E78;font-weight:700}
+main{padding:13px 15px;max-width:1400px;margin:0 auto}
+.sec{display:none}.sec.on{display:block}
+.card{background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(31,78,120,.08);padding:15px 17px;margin-bottom:13px}
+.ct{font-size:14px;font-weight:700;color:#1F4E78;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.rem{border:2px solid #FFD966;border-radius:9px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:9px;background:linear-gradient(90deg,#FFF9E6,#fff)}
+.sr{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:9px;margin-bottom:12px}
+.sc{background:#fff;border-radius:9px;padding:11px 13px;box-shadow:0 2px 9px rgba(31,78,120,.08);text-align:center}
+.sn{font-size:24px;font-weight:800;color:#1F4E78}.sw{color:#C00000}.sok{color:#70AD47}
+.sl{font-size:11px;color:#777;margin-top:2px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#1F4E78;color:#fff;padding:8px 9px;text-align:center;white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid #EEF2F7;text-align:center;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#F5F8FF}
+.badge{display:inline-block;padding:2px 7px;border-radius:16px;font-size:11px;font-weight:600}
+.bg{background:#E2F0D9;color:#375623}.br{background:#FCE4D6;color:#C00000}.by{background:#FFF2CC;color:#806000}.bgr{background:#eee;color:#555}
+button{cursor:pointer;border:none;border-radius:6px;font-weight:600;padding:5px 10px;font-size:12px}
+.bp{background:#1F4E78;color:#fff}.bs{background:#70AD47;color:#fff}.bw{background:#ED7D31;color:#fff}.bd{background:#C00000;color:#fff}
+.brow{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fg label{font-size:11px;font-weight:600;color:#1F4E78}
+.fg input,.fg select{padding:7px 9px;border:1.5px solid #D0DFF0;border-radius:6px;font-size:13px;outline:none;width:100%}
+.fg input:focus,.fg select:focus{border-color:#2E75B6}
+.fg2{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px}
+.mb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:flex-start;justify-content:center;padding:30px 12px;overflow-y:auto}
+.mb.on{display:flex}
+.md{background:#fff;border-radius:12px;padding:20px 18px;width:100%;max-width:500px;box-shadow:0 8px 32px rgba(31,78,120,.2);margin:auto}
+.md h3{color:#1F4E78;margin-bottom:13px;font-size:14px}
+.mf{display:flex;gap:7px;justify-content:flex-end;margin-top:14px}
+.ftag{display:inline-block;padding:2px 7px;border-radius:9px;font-size:11px;font-weight:600}
+.fu{background:#DCEAF7;color:#1F4E78}.fi{background:#E2F0D9;color:#375623}.ff{background:#FCE4D6;color:#C00000}.fs{background:#FFF2CC;color:#806000}.fc{background:#EDE7F6;color:#4A148C}.fp{background:#F3E5F5;color:#6A1B9A}.fc0{background:#DCEAF7;color:#1F4E78}.fc1{background:#E2F0D9;color:#375623}.fc2{background:#FCE4D6;color:#C00000}.fc3{background:#FFF2CC;color:#806000}.fc4{background:#EDE7F6;color:#4A148C}.fc5{background:#F9F0FF;color:#5B2C8D}.fc6{background:#FDE8E8;color:#922B21}.fc7{background:#E8F8F5;color:#1A5276}.fc8{background:#FEF9E7;color:#7D6608}.fc9{background:#FDFEFE;color:#424949}
+.arow{display:flex;align-items:center;gap:8px;padding:5px 10px;border:1px solid #D0DFF0;border-radius:7px;margin-bottom:4px;background:#F8FAFD;font-size:13px}.pwgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;align-items:stretch}.pwtile{background:#fff;border:1px solid #D0DFF0;border-radius:8px;padding:8px 8px 7px;box-shadow:0 1px 0 rgba(0,0,0,.03);min-height:82px;display:flex;flex-direction:column;justify-content:space-between}.pwtile .nm{font-weight:700;font-size:13px;line-height:1.05;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pwtile .sub{font-size:9px;color:#666;line-height:1;margin-top:1px;opacity:.85}.pwtile .ord{font-size:24px;font-weight:900;color:#6A1B9A;text-align:right;line-height:1}.pwtile .ord-red{color:#C00000}
+/* powder schedule table */
+.pw-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.pw-tbl th{background:#F3F6F9;color:#1F4E78;padding:6px 8px;border:1px solid #D0DFF0;text-align:center;white-space:nowrap}
+.pw-tbl td{padding:6px 8px;border:1px solid #EEF2F7;text-align:center;vertical-align:middle}
+.pw-tbl tr:hover td{background:#F5F8FF}
+footer{text-align:center;padding:11px;font-size:11px;color:#bbb}
+
+/* ===== MOBILE RESPONSIVE (v20-r1) ===== */
+@media(max-width:768px){
+  header{padding:0 10px;height:46px;}
+  header h1{font-size:13px;}
+  .hr span{display:none;}
+  .tw{-webkit-overflow-scrolling:touch;}
+  nav{padding:0 4px;}
+  .nt{padding:8px 9px;font-size:12px;}
+  main{padding:8px;}
+  .card{padding:10px;border-radius:10px;margin-bottom:10px;}
+  .ct{font-size:13px;}
+  table{font-size:12px;}
+  th,td{padding:6px 6px;}
+  .btn,.bp,.br,.bg,.bo{padding:5px 7px;font-size:11px;}
+  .modal{padding:8px 6px;}
+  .modal-box{width:96vw;max-width:96vw;padding:14px;border-radius:10px;}
+  .fg{grid-template-columns:1fr!important;}
+  .sn{font-size:22px!important;}
+}
+@media(max-width:480px){
+  header h1{font-size:12px;}
+  .nt{padding:7px 8px;font-size:11px;}
+  th,td{padding:5px 5px;font-size:11px;}
+}
+
+/* 奶粉顏色自動分配 */
+.pfp0{background:#DCEAF7;color:#1F4E78}.pfp1{background:#E2F0D9;color:#375623}
+.pfp2{background:#FCE4D6;color:#C00000}.pfp3{background:#FFF2CC;color:#806000}
+.pfp4{background:#EDE7F6;color:#4A148C}.pfp5{background:#F3E5F5;color:#6A1B9A}
+.pfp6{background:#E0F7FA;color:#006064}.pfp7{background:#FBE9E7;color:#BF360C}
+.pfp8{background:#F1F8E9;color:#33691E}.pfp9{background:#E8EAF6;color:#1A237E}
+
+.history-table td, .history-table th{white-space:nowrap}
+.history-table td:nth-child(3), .history-table td:nth-child(6){white-space:normal}
+.history-table .actcell{min-width:120px;white-space:nowrap}
+.history-table .actcell button{margin-right:6px}
+
+.hist-orders td:nth-child(6), .hist-orders th:nth-child(6){display:none}
+
+.hist-orders{width:100%}
+.hist-orders th,.hist-orders td{text-align:center}
+.hist-orders th:nth-child(1),.hist-orders td:nth-child(1){width:120px}
+.hist-orders th:nth-child(2),.hist-orders td:nth-child(2){width:120px}
+.hist-orders th:nth-child(3),.hist-orders td:nth-child(3){width:120px}
+.hist-orders th:nth-child(4),.hist-orders td:nth-child(4){width:80px}
+.hist-orders th:nth-child(5),.hist-orders td:nth-child(5){width:90px}
+.hist-orders th:nth-child(6),.hist-orders td:nth-child(6){width:110px}
+.hist-orders .actcell{width:120px;min-width:120px}
+.hist-orders .actcell button{display:inline-block;margin:0 4px}
+</style>
+
+<link rel="manifest" id="manifestLink">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="C區倉存">
+<meta name="theme-color" content="#1F4E78">
+<meta name="application-name" content="C區倉存管理系統">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231F4E78'/><text y='.9em' font-size='72' x='8'>🩺</text></svg>">
+<link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231F4E78'/><text y='.9em' font-size='72' x='8'>🩺</text></svg>">
+<link rel="shortcut icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%231F4E78'/><text y='.9em' font-size='72' x='8'>🩺</text></svg>">
+</head>
+<body>
+
+<div id="LP">
+  <div class="lb">
+    <div style="font-size:28px;margin-bottom:6px">🩺</div>
+    <h2>C區倉存管理系統</h2>
+    <input type="text" id="uid" placeholder="用戶名稱">
+    <input type="password" id="upw" placeholder="密碼">
+    <button id="lbtn" data-action="login">登入</button>
+    <div id="lerr"></div>
+  </div>
+</div>
+
+<div id="APP">
+  <header>
+    <h1>🩺 C區倉存管理系統</h1>
+    <div class="hr"><button class="hbtn" id="installBtn" style="display:none;background:rgba(112,173,71,.6)">📲 安裝App</button>
+      <span id="hd"></span>
+      <button class="hbtn" data-action="logout">登出</button>
+      <button class="hbtn" style="background:rgba(255,80,80,.3)" data-action="reset">重置資料</button>
+    </div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin-left:8px;"><span id="fb-sync-status" style="font-size:11px;opacity:1;color:#A6A6A6;padding:2px 8px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:rgba(0,0,0,.16);white-space:nowrap;">未登入</span><span id="fb-sync-updated" style="font-size:10px;opacity:1;color:rgba(255,255,255,.82);white-space:nowrap;">最後更新：--</span></div></header>
+  <nav>
+        <div class="nt" data-tab="order">📋 訂貨記錄</div>
+    <div class="nt" data-tab="arr">📦 到貨記錄</div>
+    <div class="nt" data-tab="pw">🥛 口服院友</div>
+    <div class="nt" data-tab="res">🧑‍⚕️ 胃喉院友</div>
+    <div class="nt" data-tab="log">📜 歷史記錄</div>
+    <div class="nt" data-tab="cfg">⚙️ 設定</div>
+  </nav>
+  <main>
+    
+
+    <!-- 總覽 -->
+    <div class="sec" id="s-ov">
+      <div class="sr" id="stats"></div>
+      <div id="pw-alert-ov"></div>
+      <div class="card">
+        <div class="ct">🧑‍⚕️ 胃喉院友 — 支裝奶庫存</div>
+        <div class="tw"><table><thead><tr><th>床號</th><th>姓名</th><th>奶類</th><th>庫存(支)</th><th>每日</th><th>可用</th><th>警示</th><th>操作</th></tr></thead><tbody id="tb-ov"></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="ct">🥛 口服院友 — 奶粉庫存</div>
+        <div class="tw"><table><thead><tr><th>院友</th><th>奶粉</th><th>庫存(罐)</th><th>每幾日/罐</th><th>下次開罐</th><th>建議訂購</th><th>預計落單日</th><th>狀態</th><th>操作</th></tr></thead><tbody id="tb-ov-pw"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- 訂貨記錄 -->
+    <div class="sec" id="s-order">
+      
+      <div class="card"><div class="ct">📅 2026-27 每星期訂貨數量表（箱）</div><div id="ord-full-body"></div></div>
+      
+      <div class="card"><div class="ct">📋 建議訂貨量（奶粉）</div><div id="pw-ord-body"></div></div>
+      <div class="card">
+        <div class="ct">📝 訂貨記錄 <button class="bp" data-action="m-ol-add">➕ 新增</button></div>
+        <div class="tw"><table class="history-table"><thead><tr><th>日期</th><th>院友</th><th>產品</th><th>數量</th><th>狀態</th><th>備註</th><th>操作</th></tr></thead><tbody id="tb-ol"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- 到貨記錄 -->
+    <div class="sec" id="s-arr">
+      <div class="card">
+        <div class="ct">🧑‍⚕️ 胃喉院友 — 支裝奶到貨</div>
+        <div id="arr-list"></div>
+      </div>
+      <div class="card">
+        <div class="ct">🥛 口服院友 — 奶粉到貨</div>
+        <div id="pw-arr-list"></div>
+      </div>
+    </div>
+
+    <!-- 奶粉 -->
+    <div class="sec" id="s-pw">
+      <div class="card">
+        <div class="ct">🥛 口服院友（奶粉） <button class="bp" data-action="m-pa-add">➕ 新增院友</button></div>
+        <div id="pw-alert-pw"></div>
+        <div class="tw"><table><thead><tr><th>院友</th><th>奶粉</th><th>每幾日/罐</th><th>上次開罐</th><th>下次開罐</th><th>庫存(罐)</th><th>基數</th><th>建議訂購</th><th>預計落單日</th><th>狀態</th><th>操作</th></tr></thead><tbody id="tb-pw"></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="ct">📅 口服院友開罐日程（未來10次）</div>
+        <div class="tw"><table class="pw-tbl"><thead><tr id="pw-sched-head"></tr></thead><tbody id="pw-sched-body"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- 院友管理 -->
+    <div class="sec" id="s-res">
+      <div class="card">
+        <div class="ct">🧑‍⚕️ 胃喉院友（鼻胃管支裝奶） <button class="bp" data-action="m-res-add">➕ 新增院友</button></div>
+        <div class="tw"><table><thead><tr><th>床號</th><th>姓名</th><th>支裝奶</th><th>每日支數</th><th>庫存(支)</th><th>安全量</th><th>入住日</th><th>入院日</th><th>出院日</th><th>狀態</th><th>操作</th></tr></thead><tbody id="tb-res"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- 設定 -->
+    <div class="sec" id="s-cfg">
+      <div class="card">
+        <div class="ct">💾 資料備份</div>
+        <p style="font-size:12px;color:#666;margin-bottom:10px">定期匯出資料，防止資料遺失。匯入可還原備份。</p>
+        <div class="brow">
+          <button class="bp" data-action="export-backup">📤 匯出備份 (JSON)</button>
+          <button class="bp" data-action="export-backup-word">📝 匯出備份 (Word)</button>
+          <button class="bs" data-action="import-backup">📥 匯入備份</button>
+        </div>
+        <input type="file" id="import-file" accept=".json" style="display:none">
+      </div>
+      <div class="card">
+        <div class="ct">💧 支裝奶設定 <button class="bp" data-action="m-fm-add">➕ 新增</button></div>
+        <div class="tw"><table><thead><tr><th>#</th><th>名稱</th><th>容量</th><th>每箱</th><th>贈送</th><th>實收/箱</th><th>操作</th></tr></thead><tbody id="tb-fm"></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="ct">🥛 奶粉類別設定 <button class="bp" data-action="m-pf-add">➕ 新增奶粉</button></div>
+        <div class="tw"><table><thead><tr><th>#</th><th>名稱</th><th>每罐容量</th><th>操作</th></tr></thead><tbody id="tb-pf"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- 歷史記錄 -->
+    <div class="sec" id="s-log">
+      <div class="card">
+        <div class="ct">📝 歷史訂貨紀錄</div>
+        <div class="tw"><table class="history-table hist-orders"><thead><tr><th>日期</th><th>院友</th><th>產品</th><th>數量</th><th>狀態</th><th>操作</th></tr></thead><tbody id="tb-ol-hist"></tbody></table></div>
+      </div>
+    <div class="card">
+        <div class="ct">📦 到貨記錄（支裝奶）</div>
+        <div class="tw"><table class="history-table"><thead><tr><th>日期</th><th>院友</th><th>奶類</th><th>箱</th><th>散支</th><th>合計</th><th>備註</th></tr></thead><tbody id="tb-al"></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="ct">📦 到貨記錄（奶粉）</div>
+        <div class="tw"><table class="history-table"><thead><tr><th>日期</th><th>院友</th><th>奶粉</th><th>數量</th><th>備註</th></tr></thead><tbody id="tb-paa"></tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="ct">🥛 開罐記錄（奶粉）</div>
+        <div class="tw"><table class="history-table"><thead><tr><th>日期</th><th>院友</th><th>奶粉</th><th>備註</th></tr></thead><tbody id="tb-pl"></tbody></table></div>
+      </div>
+      </div>
+  </main>
+  <footer>C區倉存管理系統 | 每月第一及第三個星期一訂貨</footer>
+</div>
+
+<!-- MODALS -->
+<div class="mb" id="m-res"><div class="md">
+  <h3 id="m-res-t">院友</h3><input type="hidden" id="r-id">
+  <div class="fg2">
+    <div class="fg"><label>床號</label><input id="r-num" type="text" inputmode="text" placeholder="C01-A"></div>
+    <div class="fg"><label>姓名 *</label><input id="r-name" type="text"></div>
+    <div class="fg"><label>支裝奶（鼻胃管）</label><select id="r-fm"></select></div>
+    <div class="fg"><label>每日支數</label><input id="r-daily" type="number" value="1" min="1"></div>
+    <div class="fg"><label>現有庫存(支)</label><input id="r-stock" type="number" value="0" min="0"></div>
+    <div class="fg"><label>安全存量(支)</label><input id="r-safety" type="number" value="24"></div>
+    <div class="fg"><label>入住日期</label><input id="r-admit" type="date"></div>
+    <div class="fg"><label>入院日（停消耗）</label><input id="r-hosp" type="date"></div>
+    <div class="fg"><label>出院日（恢復消耗）</label><input id="r-dis" type="date"></div>
+  </div>
+  <div style="margin-top:10px;padding:8px;background:#FFF9E6;border-radius:6px;font-size:12px;color:#806000">💡 口服奶粉院友請到「🥛 口服院友」分頁設定</div>
+  <div class="mf"><button class="bd" data-action="mc" data-t="m-res">取消</button><button class="bs" data-action="sv-res">儲存</button></div>
+</div></div>
+
+<div class="mb" id="m-fm"><div class="md">
+  <h3 id="m-fm-t">支裝奶</h3><input type="hidden" id="f-id">
+  <div class="fg2">
+    <div class="fg"><label>名稱 *</label><input id="f-name" type="text"></div>
+    <div class="fg"><label>容量(ml)</label><input id="f-ml" type="number" value="250"></div>
+    <div class="fg"><label>每箱支數</label><input id="f-perbox" type="number" value="24"></div>
+    <div class="fg"><label>每箱贈送支數</label><input id="f-bonus" type="number" value="0"></div>
+  </div>
+  <div class="mf"><button class="bd" data-action="mc" data-t="m-fm">取消</button><button class="bs" data-action="sv-fm">儲存</button></div>
+</div></div>
+
+<div class="mb" id="m-pf"><div class="md">
+  <h3 id="m-pf-t">奶粉類別</h3><input type="hidden" id="pf-id">
+  <div class="fg2">
+    <div class="fg"><label>名稱 *</label><input id="pf-name" type="text"></div>
+    <div class="fg"><label>每罐容量（如 400g）</label><input id="pf-sz" type="text" placeholder="例: 400g"></div>
+  </div>
+  <div class="mf"><button class="bd" data-action="mc" data-t="m-pf">取消</button><button class="bs" data-action="sv-pf">儲存</button></div>
+</div></div>
+
+<div class="mb" id="m-arr"><div class="md">
+  <h3 id="m-arr-t">登記支裝奶到貨</h3><input type="hidden" id="a-rid">
+  <div class="fg2">
+    <div class="fg"><label>到貨日期</label><input id="a-date" type="date"></div>
+    <div class="fg"><label>箱數</label><input id="a-box" type="number" value="0" min="0"></div>
+    <div class="fg"><label>散支</label><input id="a-sg" type="number" value="0" min="0"></div>
+    <div class="fg"><label>備註</label><input id="a-note" type="text"></div>
+  </div>
+  <div id="a-calc" style="margin:8px 0;padding:8px;background:#F3F6F9;border-radius:6px;font-size:12px"></div>
+  <div class="mf"><button class="bd" data-action="mc" data-t="m-arr">取消</button><button class="bs" data-action="sv-arr">確認到貨</button></div>
+</div></div>
+
+<div class="mb" id="m-pa-arr"><div class="md">
+  <h3 id="m-pa-arr-t">奶粉到貨（增加庫存）</h3><input type="hidden" id="paa-id">
+  <div class="fg2">
+    <div class="fg"><label>到貨日期</label><input id="paa-date" type="date"></div>
+    <div class="fg"><label>到貨罐數</label><input id="paa-qty" type="number" value="1" min="1"></div>
+    <div class="fg"><label>備註</label><input id="paa-note" type="text"></div>
+  </div>
+  <div id="paa-info" style="margin:8px 0;padding:8px;background:#F3F6F9;border-radius:6px;font-size:12px"></div>
+  <div class="mf"><button class="bd" data-action="mc" data-t="m-pa-arr">取消</button><button class="bs" data-action="sv-pa-arr">確認到貨</button></div>
+</div></div>
+
+<div class="mb" id="m-hosp"><div class="md">
+  <h3 id="m-hosp-t">入院 / 出院設置</h3><input type="hidden" id="hs-id">
+  <div style="margin-bottom:12px;font-size:13px;color:#555;padding:8px;background:#FFF9E6;border-radius:6px">
+    入院後系統自動停止計算每日消耗；出院後自動恢復。
+  </div>
+  <div class="fg2">
+    <div class="fg"><label>入院日期（填入即生效）</label><input id="hs-hosp" type="date"></div>
+    <div class="fg"><label>出院日期（填入即恢復消耗）</label><input id="hs-dis" type="date"></div>
+  </div>
+  <div class="mf"><button class="bd" data-action="mc" data-t="m-hosp">取消</button><button class="bs" data-action="sv-hosp">儲存</button></div>
+</div></div>
+
+<div class="mb" id="m-pa"><div class="md">
+  <h3 id="m-pa-t">口服院友設定</h3><input type="hidden" id="pa-id">
+  <div class="fg2">
+    <div class="fg"><label>院友姓名 *</label><input id="pa-name" type="text" placeholder="輸入姓名"></div>
+    <div class="fg"><label>奶粉類別 *</label><select id="pa-pf"></select></div>
+    <div class="fg"><label>每幾日用一罐</label><input id="pa-days" type="number" value="3" min="1"></div>
+    <div class="fg"><label>下次開罐日</label><input id="pa-next" type="date"></div>
+    <div class="fg"><label>現有庫存(罐)</label><input id="pa-stk" type="number" value="0" min="0"></div>
+    <div class="fg"><label>安全基數（低於即落單）</label><input id="pa-base" type="number" value="2" min="1"></div>
+    <div class="fg"><label>建議每次訂購(罐)</label><input id="pa-order" type="number" value="6" min="1"></div>
+  </div>
+  <div class="mf"><button class="bd" data-action="mc" data-t="m-pa">取消</button><button class="bs" data-action="sv-pa">儲存</button></div>
+</div></div>
+
+<div class="mb" id="m-oc"><div class="md" style="max-width:360px">
+  <div style="font-size:30px;text-align:center;margin-bottom:8px">🥛</div>
+  <h3 id="m-oc-t" style="text-align:center">確認開罐</h3>
+  <p style="font-size:13px;color:#555;margin:8px 0 14px;text-align:center">確認今日開啟新罐？庫存 -1，並記錄開罐日期及計算下次開罐日。</p>
+  <input type="hidden" id="oc-id">
+  <div class="fg"><label>備註（可選）</label><input id="oc-note" type="text"></div>
+  <div class="mf"><button class="bd" data-action="mc" data-t="m-oc">取消</button><button class="bs" data-action="sv-oc">✅ 確認開罐</button></div>
+</div></div>
+
+<div class="mb" id="m-ol"><div class="md">
+  <h3 id="m-ol-t">訂貨記錄</h3><input type="hidden" id="ol-id">
+  <div class="fg2">
+    <div class="fg"><label>訂貨日期</label><input id="ol-date" type="date"></div>
+    <div class="fg"><label>院友</label><select id="ol-res" onchange="refreshOlInfo()"></select></div>
+    <div class="fg"><label>類型</label><select id="ol-type" onchange="refreshOlInfo()"><option value="liquid">支裝奶</option><option value="powder">奶粉</option></select></div>
+    <div class="fg"><label>產品</label><select id="ol-prod"></select></div>
+    <div class="fg"><label>數量(箱/罐)</label><input id="ol-qty" type="number" value="1" min="1"></div>
+    <div class="fg"><label>狀態</label><select id="ol-stat"><option value="已訂貨">已訂貨</option><option value="已到貨">已到貨</option><option value="待確認">待確認</option></select></div>
+    <div class="fg"><label>備註</label><input id="ol-note" type="text"></div>
+  </div>
+  <div id="ol-suggest-box" style="margin-top:10px;padding:10px 13px;background:#F0F6FF;border-radius:8px;border:1.5px solid #BFD7F0;font-size:13px;line-height:1.8">
+    <div style="font-weight:700;color:#1F4E78;margin-bottom:2px">💡 建議訂貨量</div>
+    <div>口服/罐：<b id="ol-suggest-oral" style="color:#6A1B9A">—</b></div>
+    <div>胃喉/箱：<b id="ol-suggest-tube" style="color:#1F4E78">—</b></div>
+  </div>
+  <div class="mf"><button class="bd" data-action="mc" data-t="m-ol">取消</button><button class="bs" data-action="sv-ol">儲存</button></div>
+</div></div>
+
+<div class="mb" id="m-del"><div class="md" style="text-align:center;max-width:360px">
+  <div style="font-size:34px;margin-bottom:8px">⚠️</div>
+  <h3 id="m-del-t">確認刪除？</h3>
+  <p id="m-del-d" style="font-size:13px;color:#666;margin:8px 0 16px"></p>
+  <input type="hidden" id="del-type"><input type="hidden" id="del-id">
+  <div style="display:flex;gap:10px;justify-content:center">
+    <button class="bd" style="padding:8px 22px;font-size:13px" data-action="do-del">確認刪除</button>
+    <button class="bp" style="padding:8px 22px;font-size:13px" data-action="mc" data-t="m-del">取消</button>
+  </div>
+</div></div>
+
+<script>
+var U={ivan:'1234',admin:'admin'};
+var D={
+  fm:[
+    {id:'f1',name:'Ultracal 250ml',ml:250,pb:24,bn:0},
+    {id:'f2',name:'Isocal HN 250ml',ml:250,pb:24,bn:0},
+    {id:'f3',name:'Fresubin 200ml',ml:200,pb:24,bn:4},
+    {id:'f4',name:'Isosource 250ml',ml:250,pb:24,bn:0}
+  ],
+  pf:[],
+  res:[
+    {id:'r1',name:'院友A',fm:'f1',daily:1,stock:72,safety:24,admit:'2026-05-01',hosp:'',dis:''},
+    {id:'r2',name:'院友B',fm:'f2',daily:1,stock:48,safety:24,admit:'2026-05-01',hosp:'',dis:''},
+    {id:'r3',name:'院友C',fm:'f3',daily:1,stock:56,safety:28,admit:'2026-05-01',hosp:'',dis:''},
+    {id:'r4',name:'院友D',fm:'f4',daily:1,stock:24,safety:24,admit:'2026-05-01',hosp:'',dis:''}
+  ],
+  pa:[],pl:[],al:[],paa:[],ol:[]
+};
+
+function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function td(){var n=new Date();return n.getFullYear()+'-'+p2(n.getMonth()+1)+'-'+p2(n.getDate())}
+function p2(n){return n<10?'0'+n:''+n}
+function uid(){return '_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
+function addD(s,n){var d=new Date(s+'T00:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())}
+function diff(a,b){return Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/864e5)}
+function fmtD(s){if(!s)return '—';var p=s.split('-');return p[0]+'年'+~~p[1]+'月'+~~p[2]+'日'}
+function fmtS(s){if(!s)return '—';var p=s.split('-');return ~~p[1]+'/'+~~p[2]}
+function $(i){return document.getElementById(i)}
+function gv(i){return ($( i)||{}).value||''}
+function iv(i){return parseInt(($( i)||{}).value)||0}
+function sv(i,v){if($(i))$(i).value=(v==null?'':v)}
+function om(i){$(i).classList.add('on')}
+function cm2(i){$(i).classList.remove('on')}
+function gFm(id){return D.fm.find(function(x){return x.id===id})||null}
+function gPf(id){return D.pf.find(function(x){return x.id===id})||null}
+function gR(id){return D.res.find(function(x){return x.id===id})||null}
+function gPa(id){return D.pa.find(function(x){return x.id===id})||null}
+function gOl(id){return D.ol.find(function(x){return x.id===id})||null}
+function pfColor(pfId){var idx=D.pf.findIndex(function(x){return x.id===pfId});return idx>=0?'pfp'+(idx%10):'fp';}
+
+function isH(r){var t=td();if(!r.hosp||r.hosp>t)return false;if(r.dis&&r.dis<=t)return false;return true}
+function eD(r){return isH(r)?0:(r.daily||1)}
+function curStock(r){
+  if(!r.lastStockDate||isH(r))return r.stock;
+  var days=diff(r.lastStockDate,td());
+  if(days<=0)return r.stock;
+  return Math.max(0,r.stock-days*(r.daily||1));
+}
+function fcol(fid){var f=gFm(fid);if(!f)return 'fc';var n=f.name.toLowerCase();if(n.indexOf('ultracal')>=0)return 'fu';if(n.indexOf('isocal')>=0)return 'fi';if(n.indexOf('fresubin')>=0)return 'ff';if(n.indexOf('isosource')>=0)return 'fs';var idx=D.fm.findIndex(function(x){return x.id===fid});return 'fc'+(idx>=0?idx%10:0);}
+function save(){if(typeof syncToFirebase==='function')syncToFirebase()}
+function load(){try{if(window.dbRef&&typeof dbRef.once==='function'){dbRef.once('value').then(function(snap){if(snap.exists()){var d=snap.val()||{};var loaded = JSON.parse(JSON.stringify(d));
+['fm','pf','res','pa','pl','al','ol','paa'].forEach(function(k){if(!Array.isArray(loaded[k]))loaded[k]=D[k]||[]});
+D = loaded;}if(typeof rAll==='function')rAll();window.__fbSource='雲端連線中';showSync('✅ 已連接雲端','green')}).catch(function(){window.__fbSource='離線中';showSync('⚠️ 離線/權限問題','red')})}}catch(e){}}
+function syncToFirebase(){try{if(window.dbRef&&typeof dbRef.set==='function'){dbRef.set(JSON.parse(JSON.stringify(D))).then(function(){window.__fbSource='雲端連線中';showSync('✅ 已同步到雲端','green')}).catch(function(e){window.__fbSource='離線中';showSync('⚠️ 雲端同步失敗','red')})}}catch(e){}}
+function showSync(t,c){var el=document.getElementById('fb-sync-status');if(!el)return;el.textContent=t;el.style.opacity=1;el.style.color=c||'#fff';el.style.background=(c==='green')?'rgba(112,173,71,.22)':(c==='red')?'rgba(192,0,0,.18)':'rgba(166,166,166,.18)';el.style.borderColor=(c==='green')?'rgba(112,173,71,.55)':(c==='red')?'rgba(192,0,0,.45)':'rgba(166,166,166,.45)';var u=document.getElementById('fb-sync-updated');if(u)u.textContent='最後更新：'+new Date().toLocaleString('zh-HK')}
+function fillSel(id,arr,vk,lk,sel){var s=$(id);if(!s)return;s.innerHTML='';arr.forEach(function(x){var o=document.createElement('option');o.value=x[vk];o.textContent=x[lk];if(x[vk]===sel)o.selected=true;s.appendChild(o)})}
+function updateDate(){var n=new Date(),days='日一二三四五六';$('hd').textContent=n.getFullYear()+'年'+(n.getMonth()+1)+'月'+n.getDate()+'日（星期'+days[n.getDay()]+'）'}
+
+function isHospPa(pa){var t=td();if(!pa||!pa.paHosp)return false;if(pa.paHosp>t)return false;if(pa.paDis&&pa.paDis<=t)return false;return true;}
+
+function orderDates(){
+  var now=new Date();now.setHours(0,0,0,0);
+  function mon(y,m,n){var d=new Date(y,m,1),dw=d.getDay(),f=1+(dw<=1?1-dw:8-dw);return new Date(y,m,f+(n-1)*7)}
+  var out=[],yr=now.getFullYear(),mo=now.getMonth();
+  for(var i=0;i<5;i++){var m2=mo+i,y2=yr+Math.floor(m2/12),m3=m2%12;out.push(mon(y2,m3,1));out.push(mon(y2,m3,3))}
+  return out.filter(function(d){return d>=now}).sort(function(a,b){return a-b}).slice(0,6)
+}
+
+function pwAlerts(){
+  var t=td(),t2=addD(t,2),items=[];
+  D.pa.forEach(function(pa){
+    if(pa.nextOpen&&pa.nextOpen<=t2)items.push({type:'open',pa:pa});
+    else if(pa.stock<=pa.base)items.push({type:'low',pa:pa});
+  });
+  return items;
+}
+function pwAlertHTML(){
+  var t=td();
+  var items=pwAlerts(),h='';
+  items.forEach(function(a){
+    var pf=gPf(a.pa.pfId),rn=a.pa.name||'—',pn=pf?pf.name:'—';
+    if(a.type==='low'){
+      h+='<div style="background:#FFF2E8;border:2px solid #ED7D31;border-radius:8px;padding:9px 13px;margin-bottom:8px;display:flex;align-items:center;gap:9px"><span style="font-size:18px">📦</span><div><b>'+rn+' — '+pn+'</b><br><span style="font-size:12px;color:#C00000">庫存只剩 '+a.pa.stock+' 罐（基數 '+a.pa.base+' 罐），請落單！</span></div></div>';
+    }else{
+      var urg=a.pa.nextOpen<=t;
+      h+='<div style="background:'+(urg?'#FCE4D6':'#FFF9E6')+';border:2px solid '+(urg?'#C00000':'#FFD966')+';border-radius:8px;padding:9px 13px;margin-bottom:8px;display:flex;align-items:center;gap:9px"><span style="font-size:18px">'+(urg?'🔴':'🟠')+'</span><div style="flex:1"><b>'+rn+' — '+pn+'</b><br><span style="font-size:12px">'+(urg?'今日需要開罐！':'未來2日需開罐：')+fmtD(a.pa.nextOpen)+'</span></div><button class="bs" style="font-size:11px;white-space:nowrap" data-action="m-oc-open" data-id="'+a.pa.id+'">✅ 確認開罐</button></div>';
+    }
+  });
+  return h;
+}
+
+function calcOrderDay(pa){
+  if(!pa.nextOpen||!pa.days||pa.stock<=pa.base)return pa.stock<=pa.base?'<span class="badge br">立即落單!</span>':'—';
+  var daysLeft=(pa.stock-pa.base)*pa.days;
+  return '<span style="color:#ED7D31;font-weight:600">'+fmtD(addD(td(),daysLeft))+'</span>';
+}
+
+// ===== RENDERS =====
+function rAll(){
+  if($("ord-full-body"))rOrdFull();
+  rStats();
+  var pal=pwAlertHTML();
+  if($('pw-alert-ov'))$('pw-alert-ov').innerHTML=pal;
+  if($('pw-alert-pw'))$('pw-alert-pw').innerHTML=pal;
+  rOV();rArr();rPwTable();rPwSched();rRes();rCfg();rLog();rPwOrd();
+}
+
+function rReminder(){}
+function rStats(){
+  var tot=D.res.length,hp=0,lw=0,cr=0,pw=pwAlerts().length;
+  D.res.forEach(function(r){var e=eD(r);if(isH(r))hp++;if(!isH(r)&&r.stock<r.safety)lw++;if(!isH(r)&&e>0&&r.stock/e<7)cr++;});
+  $('stats').innerHTML='<div class="sc"><div class="sn">'+tot+'</div><div class="sl">胃喉院友</div></div><div class="sc"><div class="sn '+(hp?'sw':'sok')+'">'+hp+'</div><div class="sl">住院中</div></div><div class="sc"><div class="sn '+(lw?'sw':'sok')+'">'+lw+'</div><div class="sl">低安全量</div></div><div class="sc"><div class="sn '+(cr?'sw':'sok')+'">'+cr+'</div><div class="sl">7日內耗盡</div></div><div class="sc"><div class="sn '+(pw?'sw':'sok')+'">'+pw+'</div><div class="sl">奶粉提示</div></div>';
+}
+
+function rOV(){
+  // liquid
+  var h='';
+  D.res.forEach(function(r,i){
+    var f=gFm(r.fm),fn=f?f.name:'—',hp=isH(r),e=eD(r),dy=e>0?Math.floor(r.stock/e):null;
+    var warn=hp?'<span class="badge by">🩺住院</span>':r.stock<r.safety?'<span class="badge br">⚠️不足</span>':'<span class="badge bg">✅充足</span>';
+    h+='<tr><td style="font-weight:700;color:#1F4E78;text-align:left">'+(r.num||'—')+'</td><td style="font-weight:600;text-align:left">'+r.name+'</td>';
+    h+='<td><span class="ftag '+fcol(r.fm)+'">'+fn+'</span></td>';
+    h+='<td style="font-weight:700;color:'+(r.stock<r.safety&&!hp?'#C00000':'#70AD47')+'">'+r.stock+'</td>';
+    h+='<td>'+(hp?'<span style="color:#aaa">0</span>':e)+'</td>';
+    h+='<td>'+(dy!==null?dy+'日':'∞')+'</td><td>'+warn+'</td>';
+    h+='<td>';
+    h+='<button class="bp" data-action="m-arr-open" data-id="'+r.id+'" style="margin-bottom:3px">📦到貨</button><br>';
+    h+='<button class="bw" data-action="m-hosp-open" data-id="'+r.id+'">🩺入/出院</button>';
+    h+='</td></tr>';
+  });
+  $('tb-ov').innerHTML=h||'<tr><td colspan="8" style="color:#aaa;padding:14px">暫無院友</td></tr>';
+  // powder in overview
+  var ph='';
+  D.pa.forEach(function(pa){
+    var pf=gPf(pa.pfId),rn=pa.name||'—',pn=pf?pf.name+(pf.sz?' ('+pf.sz+')':''):'—';
+    var lw=pa.stock<=pa.base,needO=pa.nextOpen&&pa.nextOpen<=td();
+    ph+='<tr><td style="font-weight:600">'+rn+'</td><td><span class="ftag '+pfColor(pa.pfId)+'">'+pn+'</span></td>';
+    ph+='<td style="font-weight:700;color:'+(lw?'#C00000':'#70AD47')+'">'+pa.stock+'罐</td>';
+    ph+='<td>每'+pa.days+'日</td>';
+    ph+='<td style="font-weight:600;color:'+(needO?'#C00000':'#1F4E78')+'">'+(pa.nextOpen?fmtD(pa.nextOpen):'—')+'</td>';
+    ph+='<td>'+calcOrderDay(pa)+'</td>';
+    ph+='<td>'+(needO?'<span class="badge br">今日開罐</span>':lw?'<span class="badge br">需落單</span>':'<span class="badge bg">正常</span>')+'</td>';
+    ph+='<td><button class="bs" data-action="m-oc-open" data-id="'+pa.id+'">✅開罐</button> <button class="bp" data-action="m-pa-arr-open" data-id="'+pa.id+'">📦到貨</button></td></tr>';
+  });
+  $('tb-ov-pw').innerHTML=ph||'<tr><td colspan="8" style="color:#aaa;padding:12px">暫無奶粉設定</td></tr>';
+}
+
+function rArr(){
+  // liquid
+  var h='';
+  D.res.forEach(function(r){
+    var f=gFm(r.fm),fn=f?f.name:'—',pb=f?(f.pb+f.bn):24;
+    h+='<div class="arow"><div style="flex:1"><b>'+r.name+'</b><br><span class="ftag '+fcol(r.fm)+'">'+fn+'</span></div><div style="text-align:center;min-width:60px"><div style="font-size:10px;color:#888">庫存</div><div style="font-size:14px;font-weight:800;color:#1F4E78">'+r.stock+'支</div></div><div style="text-align:center;min-width:60px"><div style="font-size:10px;color:#888">每箱實收</div><div style="font-weight:700;color:#70AD47">'+pb+'支</div></div><button class="bs" data-action="m-arr-open" data-id="'+r.id+'">📦 登記到貨</button></div>';
+  });
+  $('arr-list').innerHTML=h||'<p style="color:#aaa;padding:14px">暫無院友</p>';
+  // powder arrival
+  var ph='';
+  D.pa.forEach(function(pa){
+    var pf=gPf(pa.pfId),rn=pa.name||'—',pn=pf?pf.name+(pf.sz?' ('+pf.sz+')':''):'—';
+    ph+='<div class="arow"><div style="flex:1"><b>'+rn+'</b><br><span class="ftag '+pfColor(pa.pfId)+'">'+pn+'</span></div><div style="text-align:center;min-width:60px"><div style="font-size:10px;color:#888">庫存</div><div style="font-size:14px;font-weight:800;color:#6A1B9A">'+pa.stock+'罐</div></div><button class="bp" data-action="m-pa-arr-open" data-id="'+pa.id+'">📦 登記到貨</button></div>';
+  });
+  $('pw-arr-list').innerHTML=ph||'<p style="color:#aaa;padding:12px">暫無奶粉院友設定</p>';
+}
+
+function rPwTable(){
+  var pal=pwAlertHTML();
+  if($('pw-alert-pw'))$('pw-alert-pw').innerHTML=pal;
+  var h='',t=td(),t2=addD(t,2);
+  D.pa.forEach(function(pa){
+    var pf=gPf(pa.pfId),rn=pa.name||'—',pn=pf?pf.name+(pf.sz?' ('+pf.sz+')':''):'—';
+    var needO=pa.nextOpen&&pa.nextOpen<=t2,lw=pa.stock<=pa.base;
+    var hosp=isHospPa(pa);
+    var st=hosp?'<span class="badge by">🏥住院</span>':pa.nextOpen&&pa.nextOpen<=t?'<span class="badge br">🔴今日開罐</span>':needO?'<span class="badge by">🟠即將開罐</span>':'<span class="badge bg">✅正常</span>';
+    if(!hosp&&lw)st+=' <span class="badge br">📦低庫存</span>';
+    h+='<tr><td style="font-weight:600;text-align:left">'+rn+'</td><td><span class="ftag '+pfColor(pa.pfId)+'">'+pn+'</span></td>';
+    h+='<td>每'+pa.days+'日</td>';
+    h+='<td style="color:#888;font-size:12px">'+(pa.lastOpen?fmtD(pa.lastOpen):'—')+'</td>';
+    h+='<td style="font-weight:600;color:'+(needO?'#C00000':'#1F4E78')+'">'+(pa.nextOpen?fmtD(pa.nextOpen):'—')+'</td>';
+    h+='<td style="font-weight:700;color:'+(lw?'#C00000':'#70AD47')+'">'+pa.stock+'罐</td><td>'+pa.base+'罐</td>';
+    var ordInTable=(D.ol||[]).some(function(o){return o.ownerType==='p'&&o.resId===pa.id&&o.stat==='已訂貨';});h+='<td>'+calcOrderDay(pa)+'</td><td>'+(ordInTable?'<span class="badge bg">✅ 已落單</span>':st)+'</td>';
+    h+='<td>';
+    if(needO)h+='<button class="bs" style="font-size:11px" data-action="m-oc-open" data-id="'+pa.id+'">✅開罐</button> ';
+    h+='<button class="bp" data-action="m-pa-edit" data-id="'+pa.id+'">✏️</button> ';
+    h+='<button class="bd" data-action="ask-del" data-id="'+pa.id+'" data-dt="pa" data-dn="奶粉設定">刪除</button></td></tr>';
+  });
+  $('tb-pw').innerHTML=h||'<tr><td colspan="10" style="color:#aaa;padding:14px">暫無口服院友。請先到⚙️設定新增奶粉類別，再按「新增院友」。</td></tr>';
+}
+
+function rPwSched(){
+  var active=D.pa.filter(function(pa){return pa.nextOpen&&pa.days>0});
+  if(!active.length){
+    $('pw-sched-head').innerHTML='<tr><th>提示</th></tr>';
+    $('pw-sched-body').innerHTML='<tr><td style="color:#aaa;padding:12px">暫無奶粉院友設定</td></tr>';
+    return;
+  }
+  var head='<tr><th style="background:#E8F0FA;color:#1F4E78;min-width:110px">院友</th>';
+  for(var k=0;k<10;k++)head+='<th style="min-width:84px">第'+(k+1)+'次</th>';
+  head+='</tr>';
+  $('pw-sched-head').innerHTML=head;
+  var body='';
+  active.forEach(function(pa){
+    var pf=gPf(pa.pfId);
+    var row='<tr><td style="font-weight:700;background:#F3F6F9;color:#1F4E78">'+(pa.name||'—')+'<br><span style="font-size:10px;font-weight:400;color:#666">'+(pf?pf.name:'—')+'</span></td>';
+    for(var k=0;k<10;k++){
+      var d=pa.nextOpen;
+      for(var j=0;j<k;j++)d=addD(d,pa.days);
+      var df=diff(td(),d);
+      var bg=df<0?'#f0f0f0':df===0?'#FCE4D6':df<=3?'#FFF2CC':'#E2F0D9';
+      var extra=(pa.stock-k)<=pa.base&&df>=0?'<div style="font-size:10px;color:#C00000;font-weight:600">🔔需落單</div>':'';
+      row+='<td style="background:'+bg+';font-size:12px"><div style="font-weight:700">'+fmtS(d)+'</div><div style="font-size:11px;color:#666">'+(df<0?'已過期':df===0?'今日':df+'日後')+'</div>'+extra+'</td>';
+    }
+    row+='</tr>';
+    body+=row;
+  });
+  $('pw-sched-body').innerHTML=body;
+}
+
+function rRes(){
+  var h='';
+  D.res.slice().sort(function(a,b){
+    return String(a.num||'').localeCompare(String(b.num||''),'en',{numeric:true,sensitivity:'base'});
+  }).forEach(function(r,i){
+    var f=gFm(r.fm),hp=isH(r);
+    h+='<tr><td style="font-weight:700;color:#1F4E78;text-align:left">'+(r.num||'—')+'</td><td style="font-weight:600;text-align:left">'+r.name+'</td>';
+    h+='<td><span class="ftag '+fcol(r.fm)+'">'+(f?f.name:'—')+'</span></td>';
+    h+='<td>'+r.daily+'</td><td>'+curStock(r)+'</td><td>'+r.safety+'</td>';
+    h+='<td>'+(r.admit||'—')+'</td><td>'+(r.hosp||'—')+'</td><td>'+(r.dis||'—')+'</td>';
+    h+='<td>'+(hp?'<span class="badge by">🩺住院</span>':'<span class="badge bg">✅在院</span>')+'</td>';
+    h+='<td><button class="bp" data-action="m-res-edit" data-id="'+r.id+'">✏️</button> <button class="bd" data-action="ask-del" data-id="'+r.id+'" data-dt="res" data-dn="'+r.name+'">🗑️</button></td></tr>';
+  });
+  $('tb-res').innerHTML=h||'<tr><td colspan="11" style="color:#aaa;padding:14px">暫無院友資料</td></tr>';
+}
+function rCfg(){
+  var hf='';
+  D.fm.forEach(function(f,i){
+    hf+='<tr><td>'+(i+1)+'</td><td><span class="ftag '+fcol(f.id)+'">'+f.name+'</span></td><td>'+f.ml+'ml</td><td>'+f.pb+'</td><td>'+(f.bn||0)+'</td><td><b>'+(f.pb+f.bn)+'</b></td>';
+    hf+='<td><button class="bp" data-action="m-fm-edit" data-id="'+f.id+'">✏️</button> <button class="bd" data-action="ask-del" data-id="'+f.id+'" data-dt="fm" data-dn="'+f.name+'">刪除</button></td></tr>';
+  });
+  $('tb-fm').innerHTML=hf||'<tr><td colspan="7" style="color:#aaa;padding:14px">暫無資料</td></tr>';
+  var hpf='';
+  D.pf.forEach(function(pf,i){
+    hpf+='<tr><td>'+(i+1)+'</td><td><span class="ftag pfp'+(i%10)+'">'+pf.name+'</span></td><td>'+(pf.sz||'—')+'</td>';
+    hpf+='<td><button class="bp" data-action="m-pf-edit" data-id="'+pf.id+'">✏️</button> <button class="bd" data-action="ask-del" data-id="'+pf.id+'" data-dt="pf" data-dn="'+pf.name+'">刪除</button></td></tr>';
+  });
+  $('tb-pf').innerHTML=hpf||'<tr><td colspan="4" style="color:#aaa;padding:14px">暫無奶粉類別，請先新增</td></tr>';
+}
+
+function rLog(){
+  var oh='';
+  D.ol.slice().sort(function(a,b){return b.date.localeCompare(a.date)}).forEach(function(o){
+    var sc=o.stat==='已到貨'?'bg':o.stat==='已訂貨'?'by':'bgr';
+    oh+='<tr><td>'+o.date+'</td><td style="font-weight:600">'+(o.rn||'—')+'</td><td>'+o.pn+'</td><td>'+o.qty+(o.type==='liquid'?'箱':'罐')+'</td><td><span class="badge '+sc+'">'+o.stat+'</span></td><td style="color:#777">'+(o.note||'')+'</td>';
+    oh+='<td><button class="bp" data-action="m-ol-edit" data-id="'+o.id+'">✏️</button> <button class="bd" data-action="ask-del" data-id="'+o.id+'" data-dt="ol" data-dn="'+o.date+' '+o.rn+'">刪除</button></td></tr>';
+  });
+  $('tb-ol').innerHTML=oh||'<tr><td colspan="7" style="color:#aaa;padding:14px">暫無記錄</td></tr>';if($('tb-ol-hist'))$('tb-ol-hist').innerHTML=oh||'<tr><td colspan="6" style="color:#aaa;padding:14px">暫無記錄</td></tr>';
+  var ah='';
+  D.al.slice().sort(function(a,b){return b.date.localeCompare(a.date)}).forEach(function(a){
+    ah+='<tr><td>'+a.date+'</td><td style="font-weight:600">'+a.rn+'</td><td><span class="ftag '+fcol(a.fm)+'">'+(gFm(a.fm)?gFm(a.fm).name:'—')+'</span></td><td>'+a.box+'箱</td><td>'+a.sg+'支</td><td><b style="color:#70AD47">+'+a.tot+'</b></td><td style="color:#777">'+(a.note||'')+'</td></tr>';
+  });
+  $('tb-al').innerHTML=ah||'<tr><td colspan="7" style="color:#aaa;padding:14px">暫無記錄</td></tr>';
+  var pph='';
+  D.paa.slice().sort(function(a,b){return b.date.localeCompare(a.date)}).forEach(function(a){
+    pph+='<tr><td>'+a.date+'</td><td style="font-weight:600">'+a.resName+'</td><td><span class="ftag '+pfColor(a.pfId)+'">'+(gPf(a.pfId)?gPf(a.pfId).name:(a.pfName||'—'))+'</span></td><td>'+a.qty+'</td><td style="color:#777">'+(a.note||'')+'</td></tr>';
+  });
+  if($('tb-paa'))$('tb-paa').innerHTML=pph||'<tr><td colspan="5" style="color:#aaa;padding:14px">暫無記錄</td></tr>';
+  var ph='';
+  D.pl.slice().sort(function(a,b){return b.date.localeCompare(a.date)}).forEach(function(l){
+    ph+='<tr><td>'+l.date+'</td><td style="font-weight:600">'+(l.resName||'—')+'</td><td><span class="ftag '+pfColor(l.pfId)+'">'+(gPf(l.pfId)?gPf(l.pfId).name:'—')+'</span></td><td style="color:#777">'+(l.note||'')+'</td></tr>';
+  });
+  $('tb-pl').innerHTML=ph||'<tr><td colspan="4" style="color:#aaa;padding:14px">暫無記錄</td></tr>';
+}
+
+function rSch(){
+  var dates=orderDates();if(!dates.length){$('sch-body').innerHTML='<p style="color:#aaa;padding:14px">暫無訂貨日程</p>';return;}
+  var labels=['第1次','第2次','第3次','第4次','第5次','第6次'];
+  var h='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:12px">';
+  dates.forEach(function(d,i){
+    var ds=d.toISOString().split('T')[0],df=diff(td(),ds);
+    var bg=df===0?'#FCE4D6':df<=7?'#FFF9E6':'#F0F6EE';
+    h+='<div style="background:'+bg+';border:1.5px solid #D0DFF0;border-radius:9px;padding:12px;text-align:center"><div style="font-size:12px;font-weight:600;color:#1F4E78">'+labels[i]+'</div><div style="font-size:15px;font-weight:800;color:#1F4E78;margin:4px 0">'+fmtD(ds)+'</div><div style="font-size:11px;color:#777">'+(df===0?'🔴今日訂貨':'⏳ '+df+'日後')+'</div></div>';
+  });
+  h+='</div><div style="padding:10px;background:#FFF9E6;border-radius:8px;font-size:12px;color:#806000">📌 每月第一及第三個星期一為固定訂貨日</div>';
+  $('sch-body').innerHTML=h;
+}
+
+
+function rOrdFull(){
+  var SCHED={"5-3": [3, 4, 4, 4, 7, 3, 4, 3, 5], "6-1": [3, 3, 4, 4, "-", 3, 3, 2, 2], "6-3": [3, 4, 5, 5, 7, 3, 4, 3, 3], "7-1": [3, 3, 4, 4, "-", 3, 3, 2, 2], "7-3": [3, 4, 5, 5, 7, 3, 4, 3, 3], "8-1": [3, 3, 4, 4, "-", 3, 3, 2, 2], "8-3": [3, 4, 5, 5, 7, 3, 4, 3, 3], "9-1": [3, 4, 4, 4, "-", 3, 4, 2, 2], "9-3": [3, 4, 5, 5, 8, 3, 4, 3, 3], "10-1": [3, 4, 4, 4, "-", 3, 4, 2, 2], "10-3": [3, 4, 5, 5, 8, 3, 4, 3, 3], "11-1": [3, 4, 4, 4, "-", 3, 4, 2, 2], "11-3": [3, 4, 5, 5, 8, 3, 4, 3, 3], "12-1": [3, 4, 4, 4, "-", 3, 4, 2, 2], "12-3": [4, 4, 5, 5, 8, 4, 4, 3, 3], "1-1": [3, 4, 4, 4, "-", 3, 4, 2, 2], "1-3": [4, 4, 5, 5, 8, 4, 4, 3, 3], "2-1": [3, 4, 4, 4, "-", 3, 4, 2, 2], "2-3": [4, 4, 5, 5, 8, 4, 4, 3, 3], "3-1": [3, 4, 4, 4, "-", 3, 4, 2, 2], "3-3": [4, 4, 5, 5, 8, 4, 4, 3, 3], "4-1": [3, 4, 4, 4, "-", 3, 4, 3, 3], "4-3": [4, 4, 5, 5, 8, 4, 4, 3, 3]};
+  var NAMES=["吳新強", "陳月來", "葉俊強", "周家祥", "蕭偉麟", "張天益", "周月霞", "黃告妹", "黎杏潤"];
+  var now=td();
+  var months=[[5,3],[6,1],[6,3],[7,1],[7,3],[8,1],[8,3],[9,1],[9,3],[10,1],[10,3],[11,1],[11,3],[12,1],[12,3],[1,1],[1,3],[2,1],[2,3],[3,1],[3,3],[4,1],[4,3]];
+  var mLabel={1:'1月',2:'2月',3:'3月',4:'4月',5:'5月',6:'6月',7:'7月',8:'8月',9:'9月',10:'10月',11:'11月',12:'12月'};
+  function getOrderDate(mo,round){
+    var yr=new Date().getFullYear();
+    var y=mo>=5?yr:yr+1;
+    var d=new Date(y,mo-1,1),dw=d.getDay(),f=1+(dw<=1?1-dw:8-dw);
+    return new Date(y,mo-1,f+(round===3?14:0)).toISOString().split('T')[0];
+  }
+  // find next slot index and cutoff month (+3 months from next slot)
+  var nextIdx=null;
+  var allDates=months.map(function(mr){return getOrderDate(mr[0],mr[1]);});
+  for(var i=0;i<allDates.length;i++){if(allDates[i]>=now&&nextIdx===null)nextIdx=i;}
+  if(nextIdx===null)nextIdx=0;
+  var cutoffDate=allDates[nextIdx];
+  var cutoffMs=new Date(cutoffDate+'T00:00:00').getTime()+90*864e5; // +90 days
+  var showAll=false;
+
+  function buildTable(showAllRows){
+    var h='';
+    // table
+    h+='<div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="width:100%;border-collapse:collapse;font-size:12px">';
+    h+='<thead><tr><th style="background:#1F4E78;color:#fff;padding:7px 10px;white-space:nowrap;text-align:left;position:sticky;left:0;z-index:2;min-width:110px">月份／星期</th>';
+    NAMES.forEach(function(n){h+='<th style="background:#1F4E78;color:#fff;padding:7px 8px;white-space:nowrap;min-width:52px">'+n+'</th>';});
+    h+='</tr></thead><tbody>';
+    var hiddenCount=0;
+    months.forEach(function(mr,i){
+      var mo=mr[0],round=mr[1],key=mo+'-'+round;
+      var qtys=SCHED[key]||null;
+      var dt=allDates[i];
+      var dtMs=new Date(dt+'T00:00:00').getTime();
+      var isNext=(i===nextIdx);
+      var isPast=dt<now;
+      var isVisible=showAllRows||dtMs<=cutoffMs||isNext||isPast;
+      if(!isVisible){hiddenCount++;return;}
+      var rowBg=isNext?'#FFF9C4':isPast?'#F7F7F7':'#fff';
+      var label=mLabel[mo]+(round===1?' 第一星期一':' 第三星期一');
+      h+='<tr style="background:'+rowBg+'">';
+      h+='<td style="font-weight:'+(isNext?'700':'500')+';color:'+(isNext?'#C00000':'#1F4E78')+';padding:6px 10px;white-space:nowrap;border-bottom:1px solid #EEF2F7;position:sticky;left:0;background:'+rowBg+';z-index:1">';
+      if(isNext)h+='▶ ';
+      h+=label+'</td>';
+      NAMES.forEach(function(n,ni){
+        var q=qtys?qtys[ni]:null;
+        var cell=(q==='-'||q===null)?'<span style="color:#bbb">—</span>':'<b style="color:'+(isNext?'#C00000':'#1F4E79')+'">'+q+'</b>';
+        h+='<td style="text-align:center;padding:6px 8px;border-bottom:1px solid #EEF2F7">'+cell+'</td>';
+      });
+      h+='</tr>';
+    });
+    h+='</tbody></table></div>';
+    if(!showAllRows&&hiddenCount>0){
+      h+='<div style="text-align:center;margin-top:8px"><button class="bp" style="font-size:12px;padding:5px 16px" onclick="rOrdFullExpand()">顯示全年 '+hiddenCount+' 個隱藏週期 ▼</button></div>';
+    } else if(showAllRows){
+      h+='<div style="text-align:center;margin-top:8px"><button class="bp" style="font-size:12px;padding:5px 16px" onclick="rOrdFullCollapse()">收起 ▲</button></div>';
+    }
+    h+='<p style="font-size:11px;color:#888;margin-top:6px">▶ 標示為下次訂貨週，數字單位為箱</p>';
+    return h;
+  }
+  window.rOrdFullExpand=function(){if($('ord-full-body'))$('ord-full-body').innerHTML=buildTable(true);};
+  window.rOrdFullCollapse=function(){if($('ord-full-body'))$('ord-full-body').innerHTML=buildTable(false);};
+  if($('ord-full-body'))$('ord-full-body').innerHTML=buildTable(false);
+}
+
+function rOrd(){
+  var dates=orderDates();
+  if(!dates.length){$('ord-body').innerHTML='<p style="color:#aaa;padding:14px">暫無訂貨日程</p>';return;}
+  var ns=dates[0];
+  var nsStr=ns.toISOString().split('T')[0];
+  var diff_days=diff(td(),nsStr);
+  var mo=ns.getMonth()+1;
+  var round=ns.getDate()<=14?1:3;
+  var key=mo+'-'+round;
+  var SCHED={"5-3": [3, 4, 4, 4, 7, 3, 4, 3, 5], "6-1": [3, 3, 4, 4, "-", 3, 3, 2, 2], "6-3": [3, 4, 5, 5, 7, 3, 4, 3, 3], "7-1": [3, 3, 4, 4, "-", 3, 3, 2, 2], "7-3": [3, 4, 5, 5, 7, 3, 4, 3, 3], "8-1": [3, 3, 4, 4, "-", 3, 3, 2, 2], "8-3": [3, 4, 5, 5, 7, 3, 4, 3, 3], "9-1": [3, 4, 4, 4, "-", 3, 4, 2, 2], "9-3": [3, 4, 5, 5, 8, 3, 4, 3, 3], "10-1": [3, 4, 4, 4, "-", 3, 4, 2, 2], "10-3": [3, 4, 5, 5, 8, 3, 4, 3, 3], "11-1": [3, 4, 4, 4, "-", 3, 4, 2, 2], "11-3": [3, 4, 5, 5, 8, 3, 4, 3, 3], "12-1": [3, 4, 4, 4, "-", 3, 4, 2, 2], "12-3": [4, 4, 5, 5, 8, 4, 4, 3, 3], "1-1": [3, 4, 4, 4, "-", 3, 4, 2, 2], "1-3": [4, 4, 5, 5, 8, 4, 4, 3, 3], "2-1": [3, 4, 4, 4, "-", 3, 4, 2, 2], "2-3": [4, 4, 5, 5, 8, 4, 4, 3, 3], "3-1": [3, 4, 4, 4, "-", 3, 4, 2, 2], "3-3": [4, 4, 5, 5, 8, 4, 4, 3, 3], "4-1": [3, 4, 4, 4, "-", 3, 4, 3, 3], "4-3": [4, 4, 5, 5, 8, 4, 4, 3, 3]};
+  var NAMES=["吳新強", "陳月來", "葉俊強", "周家祥", "蕭偉麟", "張天益", "周月霞", "黃告妹", "黎杏潤"];
+  var qtys=SCHED[key]||null;
+  var roundLabel=round===1?'第一星期一':'第三星期一';
+  var h='<p style="margin-bottom:10px;font-size:13px;color:#555">下次訂貨：<b>'+fmtD(nsStr)+'</b>（'+diff_days+' 日後）— <b>'+mo+'月 '+roundLabel+'</b></p>';
+  h+='<div class="tw"><table><thead><tr><th>院友</th><th>奶類</th><th>庫存</th><th>每日</th><th>建議訂貨(箱)</th><th>庫存狀態</th></tr></thead><tbody>';
+  var any=false;
+  D.res.forEach(function(r){
+    var f=gFm(r.fm),e=eD(r);
+    var nameIdx=NAMES.indexOf(r.name);
+    var schedQty=(qtys&&nameIdx>=0)?qtys[nameIdx]:null;
+    var low=!isHr(r)&&e>0&&r.stock<r.safety;
+    if(low)any=true;
+    h+='<tr>';
+    h+='<td style="font-weight:600">'+r.name+'</td>';
+    h+='<td><span class="ftag '+fcol(r.fm)+'">'+(f?f.name:'—')+'</span></td>';
+    h+='<td style="font-weight:700;color:'+(r.stock<r.safety&&!isHr(r)?'#C00000':'#70AD47')+'">'+r.stock+'</td>';
+    h+='<td>'+(e>0?e+'支':'住院')+'</td>';
+    if(schedQty==='-'||schedQty===null){
+      h+='<td style="color:#aaa;text-align:center">—</td>';
+    } else {
+      h+='<td style="font-weight:800;color:#1F4E79;font-size:16px;text-align:center">'+schedQty+' 箱</td>';
+    }
+    h+='<td>'+(isHr(r)?'<span class="badge by">🏥住院</span>':low?'<span class="badge br">⚠️ 庫存低</span>':'<span class="badge bg">✅ 充足</span>')+'</td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+  if(!any)h+='<div style="margin-top:10px;padding:9px 13px;background:#E2F0D9;border-radius:7px;color:#375623;font-weight:600;font-size:13px">✅ 所有院友庫存充足</div>';
+  $('ord-body').innerHTML=h;
+}
+
+function calcArr(){
+  var rid=gv('a-rid'),r=gR(rid),f=r?gFm(r.fm):null,pb=f?(f.pb+f.bn):24;
+  var tot=iv('a-box')*pb+iv('a-sg');
+  $('a-calc').innerHTML='每箱實收 <b>'+pb+'</b>支 | 今次 <b>'+tot+'</b>支 | 到貨後 <b style="color:#70AD47">'+(r?r.stock+tot:tot)+'</b>支';
+}
+function fillOrderRes(sel){
+  var s=$(sel); if(!s)return; s.innerHTML='';
+  D.res.forEach(function(x){var o=document.createElement('option');o.value='r:'+x.id;o.textContent='[胃喉] '+x.name;s.appendChild(o)});
+function fillMedOwner(id,sel){var s=$(id);if(!s)return;s.innerHTML='';var o=document.createElement('option');o.value='';o.textContent='請選擇';s.appendChild(o);D.res.forEach(function(x){var op=document.createElement('option');op.value='r:'+x.id;op.textContent='[胃喉] '+x.name;s.appendChild(op)});D.pa.forEach(function(x){var op=document.createElement('option');op.value='p:'+x.id;op.textContent='[口服] '+x.name;s.appendChild(op)});if(sel)s.value=sel}
+  D.pa.forEach(function(x){var o=document.createElement('option');o.value='p:'+x.id;o.textContent='[口服] '+x.name;s.appendChild(o)});
+}
+
+function updOLprod(){var t=gv('ol-type'),list=t==='liquid'?D.fm:D.pf;fillSel('ol-prod',list,'id','name','')}
+
+// ===== HANDLERS =====
+var H={
+  login:function(){
+    var id=gv('uid').trim(),pw=gv('upw');
+    if(U[id]&&U[id]===pw){$('lerr').textContent='';$('LP').style.display='none';$('APP').style.display='block';load();rAll();updateDate();}
+    else $('lerr').textContent='( ͡° ͜ʖ ͡°) 喲，用戶名稱或密碼錯誤。';
+  },
+  logout:function(){$('APP').style.display='none';$('LP').style.display='flex';sv('uid','');sv('upw','')},
+  reset:function(){if(!confirm('確認清除全部資料？'))return;location.reload()},
+  mc:function(_,btn){cm2(btn.getAttribute('data-t'))},
+
+  // RESIDENT
+  'mresadd':function(){$('m-res-t').textContent='新增院友';sv('r-id','');sv('r-num','');sv('r-name','');sv('r-daily',1);sv('r-stock',0);sv('r-safety',24);sv('r-admit',td());sv('r-hosp','');sv('r-dis','');fillSel('r-fm',D.fm,'id','name','');om('m-res')},
+  'mrasedit':function(id){var r=gR(id);if(!r)return;$('m-res-t').textContent='編輯 — '+r.name;sv('r-id',id);sv('r-num',r.num||'');sv('r-name',r.name);sv('r-daily',r.daily);sv('r-stock',r.stock);sv('r-safety',r.safety);sv('r-admit',r.admit);sv('r-hosp',r.hosp);sv('r-dis',r.dis);fillSel('r-fm',D.fm,'id','name',r.fm);om('m-res')},
+  'svres':function(){
+    var name=gv('r-name').trim();if(!name){alert('請輸入姓名');return}
+    var rid=gv('r-id'),d={num:(gv('r-num')||'').trim(),name:name,fm:gv('r-fm'),daily:iv('r-daily')||1,stock:iv('r-stock'),lastStockDate:td(),safety:iv('r-safety'),admit:gv('r-admit'),hosp:gv('r-hosp'),dis:gv('r-dis')};
+    if(rid){var r=gR(rid);if(r)Object.assign(r,d)}else{d.id=uid();D.res.push(d)}
+    save();cm2('m-res');rAll();
+  },
+
+  // HOSPITAL
+  'mhospopen':function(id){var r=gR(id);if(!r)return;$('m-hosp-t').textContent='入/出院 — '+r.name;sv('hs-id',id);sv('hs-hosp',r.hosp||'');sv('hs-dis',r.dis||'');om('m-hosp')},
+  'svhosp':function(){var rid=gv('hs-id'),r=gR(rid);if(!r)return;r.hosp=gv('hs-hosp');r.dis=gv('hs-dis');save();cm2('m-hosp');rAll()},
+
+  // FORMULA
+  'mfmadd':function(){$('m-fm-t').textContent='新增支裝奶';sv('f-id','');sv('f-name','');sv('f-ml',250);sv('f-perbox',24);sv('f-bonus',0);om('m-fm')},
+  'mfmedit':function(id){var f=gFm(id);if(!f)return;$('m-fm-t').textContent='編輯 — '+f.name;sv('f-id',id);sv('f-name',f.name);sv('f-ml',f.ml);sv('f-perbox',f.pb);sv('f-bonus',f.bn);om('m-fm')},
+  'svfm':function(){
+    var name=gv('f-name').trim();if(!name){alert('請輸入名稱');return}
+    var fid=gv('f-id'),d={name:name,ml:iv('f-ml')||250,pb:iv('f-perbox')||24,bn:iv('f-bonus')||0};
+    if(fid){var f=gFm(fid);if(f)Object.assign(f,d)}else{d.id=uid();D.fm.push(d)}
+    save();cm2('m-fm');rAll();
+  },
+
+  // POWDER FORMULA
+  'mpfadd':function(){$('m-pf-t').textContent='新增奶粉';sv('pf-id','');sv('pf-name','');sv('pf-sz','');om('m-pf')},
+  'mpfedit':function(id){var pf=gPf(id);if(!pf)return;$('m-pf-t').textContent='編輯 — '+pf.name;sv('pf-id',id);sv('pf-name',pf.name);sv('pf-sz',pf.sz);om('m-pf')},
+  'svpf':function(){
+    var name=gv('pf-name').trim();if(!name){alert('請輸入名稱');return}
+    var pfid=gv('pf-id'),d={name:name,sz:gv('pf-sz').trim()};
+    if(pfid){var pf=gPf(pfid);if(pf)Object.assign(pf,d)}else{d.id=uid();D.pf.push(d)}
+    save();cm2('m-pf');rCfg();
+  },
+
+  // ARRIVAL (liquid)
+  'marropen':function(id){var r=gR(id);if(!r)return;$('m-arr-t').textContent='📦 '+r.name+' 支裝奶到貨';sv('a-rid',id);sv('a-date',td());sv('a-box',0);sv('a-sg',0);sv('a-note','');calcArr();om('m-arr')},
+  'svarr':function(){
+    var rid=gv('a-rid'),r=gR(rid);if(!r)return;
+    var f=gFm(r.fm),pb=f?(f.pb+f.bn):24,box=iv('a-box'),sg=iv('a-sg'),tot=box*pb+sg;
+    r.stock+=tot;r.lastStockDate=td();
+    D.al.push({date:gv('a-date'),resId:rid,rn:r.name,fm:r.fm,box:box,sg:sg,tot:tot,note:gv('a-note')});
+    save();cm2('m-arr');rAll();
+  },
+
+  // ARRIVAL (powder)
+  'mpaarropen':function(id){var pa=gPa(id),pf=pa?gPf(pa.pfId):null;if(!pa)return;$('m-pa-arr-t').textContent='📦 '+(pa.name||'')+ ' 奶粉到貨';sv('paa-id',id);sv('paa-date',td());sv('paa-qty',1);sv('paa-note','');$('paa-info').innerHTML='院友：<b>'+(pa.name||'—')+'</b> | 奶粉：<b>'+(pf?pf.name:'—')+'</b> | 現有庫存：<b style="color:#6A1B9A">'+pa.stock+'罐</b>';om('m-pa-arr')},
+  'svpaarr':function(){
+    var paid=gv('paa-id'),pa=gPa(paid);if(!pa)return;
+    var qty=iv('paa-qty')||1;
+    pa.stock+=qty;
+    D.paa.push({id:uid(),date:gv('paa-date')||td(),resName:pa.name,pfId:pa.pfId,qty:qty,note:gv('paa-note')||''});
+    save();cm2('m-pa-arr');rAll();
+  },
+
+  // POWDER ASSIGN
+  'mpaadd':function(){if(!D.pf.length){alert('請先到「設定」新增奶粉類別，才可新增口服院友。');return;}$('m-pa-t').textContent='新增口服院友';sv('pa-id','');sv('pa-name','');sv('pa-days',3);sv('pa-next',td());sv('pa-stk',0);sv('pa-base',2);sv('pa-order',6);fillSel('pa-pf',D.pf,'id','name','');om('m-pa')},
+  'mpaedit':function(id){var pa=gPa(id);if(!pa)return;if(!D.pf.length){alert('請先到「設定」新增奶粉類別。');return;}$('m-pa-t').textContent='編輯口服院友';sv('pa-id',id);sv('pa-name',pa.name||'');sv('pa-days',pa.days);sv('pa-next',pa.nextOpen||td());sv('pa-stk',pa.stock);sv('pa-base',pa.base);sv('pa-order',pa.orderQty||6);sv('pa-hosp2',pa.paHosp||'');sv('pa-dis2',pa.paDis||'');fillSel('pa-pf',D.pf,'id','name',pa.pfId);om('m-pa')},
+  'svpa':function(){
+    var name=gv('pa-name').trim();if(!name){alert('請輸入院友姓名');return}
+    if(!gv('pa-pf')){alert('請先在設定新增奶粉類別');return}
+    var paid=gv('pa-id'),d={name:name,pfId:gv('pa-pf'),days:iv('pa-days')||3,nextOpen:gv('pa-next'),stock:iv('pa-stk'),base:iv('pa-base'),orderQty:iv('pa-order')||6,lastOpen:'',paHosp:gv('pa-hosp2'),paDis:gv('pa-dis2')};
+    if(paid){var pa=gPa(paid);if(pa){d.lastOpen=pa.lastOpen;Object.assign(pa,d)}}else{d.id=uid();D.pa.push(d)}
+    save();cm2('m-pa');rAll();
+  },
+
+  // OPEN CAN
+  'mocopen':function(id){var pa=gPa(id),pf=pa?gPf(pa.pfId):null;if(!pa)return;sv('oc-id',id);sv('oc-note','');$('m-oc-t').textContent='開罐 — '+(pa.name||'')+' '+(pf?pf.name:'');om('m-oc')},
+  'svoc':function(){
+    var paid=gv('oc-id'),pa=gPa(paid);if(!pa)return;
+    D.pl.push({date:td(),resName:pa.name,pfId:pa.pfId,note:gv('oc-note')});
+    pa.lastOpen=td();pa.stock=Math.max(0,pa.stock-1);pa.nextOpen=addD(td(),pa.days);
+    save();cm2('m-oc');rAll();
+  },
+
+  // ORDER LOG
+  'moladd':function(){$('m-ol-t').textContent='新增訂貨記錄';sv('ol-id','');sv('ol-date',td());sv('ol-qty',1);sv('ol-note','');sv('ol-stat','已訂貨');fillOrderRes('ol-res');$('ol-type').value='liquid';updOLprod();om('m-ol');setTimeout(refreshOlInfo,100)},
+  'moledit':function(id){var o=gOl(id);if(!o)return;$('m-ol-t').textContent='編輯訂貨';sv('ol-id',id);sv('ol-date',o.date);sv('ol-qty',o.qty);sv('ol-note',o.note||'');sv('ol-stat',o.stat);fillOrderRes('ol-res');$('ol-res').value=(o.ownerType==='p'?'p:':'r:')+(o.resId||'');$('ol-type').value=o.type||'liquid';updOLprod();if($('ol-prod'))$('ol-prod').value=o.prodId;om('m-ol');setTimeout(refreshOlInfo,100)},
+  'svol':function(){
+    var oid=gv('ol-id'),type=gv('ol-type'),pid=gv('ol-prod'),prod=type==='liquid'?gFm(pid):gPf(pid),sel=gv('ol-res'),own=sel.split(':'),kind=own[0],rid=own[1],r=kind==='r'?gR(rid):gPa(rid),name=r?r.name:'—';
+    var d={date:gv('ol-date'),ownerType:kind,resId:rid,rn:name,type:type,prodId:pid,pn:prod?prod.name:'—',qty:iv('ol-qty')||1,stat:gv('ol-stat'),note:gv('ol-note')};
+    if(oid){var ol=gOl(oid);if(ol)Object.assign(ol,d)}else{d.id=uid();D.ol.push(d)}
+    save();cm2('m-ol');rLog();
+  },
+
+  // DELETE
+  'askdel':function(id,btn){
+    var dt=btn.getAttribute('data-dt'),dn=btn.getAttribute('data-dn');
+    sv('del-type',dt);sv('del-id',id);
+    $('m-del-t').textContent='確認刪除？';
+    $('m-del-d').textContent='即將刪除「'+dn+'」，此操作不可還原。';
+    om('m-del');
+  },
+  'dodel':function(){
+    var dt=gv('del-type'),id=gv('del-id');
+    function rm(arr){return arr.filter(function(x){return String(x.id)!==String(id)})}
+    if(dt==='res'){D.res=rm(D.res);save();cm2('m-del');rAll();}
+    else if(dt==='fm'){
+      if(D.res.some(function(r){return r.fm===id})){alert('此奶類仍有院友使用');cm2('m-del');return}
+      D.fm=rm(D.fm);save();cm2('m-del');rAll();
+    }
+    else if(dt==='pf'){D.pf=rm(D.pf);save();cm2('m-del');rCfg();}
+    else if(dt==='pa'){D.pa=rm(D.pa);save();cm2('m-del');rAll();}
+    else if(dt==='ol'){D.ol=rm(D.ol);save();cm2('m-del');rLog();}
+  },
+
+  // BACKUP
+  'exportBackup':function(){
+    var data=JSON.stringify(D,null,2);
+    var blob=new Blob([data],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    var now=new Date();
+    var fn='backup_'+now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+'.json';
+    a.href=url;a.download=fn;a.click();
+    URL.revokeObjectURL(url);
+    alert('✅ 備份已匯出：'+fn);
+  },
+  'exportBackupWord':function(){
+    var now=new Date();
+    var fn='backup_'+now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+'.doc';
+    var rows=function(arr,cols){return '<table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse;width:100%"><tr>'+cols.map(function(c){return '<th>'+c+'</th>'}).join('')+'</tr>'+arr.map(function(r){return '<tr>'+r.map(function(x){return '<td>'+escapeHtml(x)+'</td>'}).join('')+'</tr>'}).join('')+'</table>';};
+    var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>資料備份</title></head><body style="font-family:Arial,\"Microsoft JhengHei\",sans-serif">';
+    html+='<h2>資料備份</h2>';
+    html+='<p>匯出時間：'+escapeHtml(now.toLocaleString())+'</p>';
+    html+='<h3>資料概覽</h3>';
+    html+=rows([
+      ['支裝奶設定',D.fm.length],['奶粉設定',D.pf.length],['胃喉院友',D.res.length],['口服院友',D.pa.length],['開罐記錄',D.pl.length],['到貨記錄',D.al.length],['訂貨紀錄',D.ol.length]
+    ],['項目','數量']);
+    html+='<h3>支裝奶設定</h3>'+rows(D.fm.map(function(x){return [x.name,x.ml+'ml',x.pb,'+ '+x.bn]}),['名稱','容量','每箱','Bonus']);
+    html+='<h3>奶粉設定</h3>'+rows(D.pf.map(function(x){return [x.name,x.sz||'']}),['名稱','規格']);
+    html+='<h3>胃喉院友</h3>'+rows(D.res.map(function(x){return [x.name,x.fm,x.daily,x.stock,x.safety,x.admit,x.hosp||'',x.dis||'']}),['姓名','奶類','每日','庫存','基數','入院','出院','轉出']);
+    html+='<h3>口服院友</h3>'+rows(D.pa.map(function(x){return [x.name,x.pfId,x.days,x.nextOpen,x.stock,x.base,x.orderQty,x.lastOpen||'']}),['姓名','奶粉','每幾日','下次開罐','庫存','基數','建議訂貨','上次開罐']);
+    html+='<h3>開罐記錄</h3>'+rows(D.pl.map(function(x){return [x.date,x.resName||'',x.pn||'',x.note||'']}),['日期','院友','奶粉','備註']);
+    html+='<h3>到貨記錄</h3>'+rows(D.al.map(function(x){return [x.date,x.resName||'',x.pn||'',x.box||'',x.sg||'',x.tot||'',x.note||'']}),['日期','院友','奶類','箱','散支','合計','備註']);
+    html+='<h3>訂貨紀錄</h3>'+rows(D.ol.map(function(x){return [x.date,x.rn||'',x.pn||'',x.qty||'',x.stat||'',x.note||'']}),['日期','院友','產品','數量','狀態','備註']);
+    html+='</body></html>';
+    var blob=new Blob([html],{type:'application/msword;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;a.download=fn;a.click();
+    URL.revokeObjectURL(url);
+    alert('✅ Word 表格式備份已匯出：'+fn);
+  },
+'importBackup':function(){
+    $('import-file').click();
+  }
+};
+
+var AM={
+  'login':'login','logout':'logout','reset':'reset','mc':'mc',
+  'm-res-add':'mresadd','m-res-edit':'mrasedit','sv-res':'svres',
+  'm-hosp-open':'mhospopen','sv-hosp':'svhosp',
+  'm-fm-add':'mfmadd','m-fm-edit':'mfmedit','sv-fm':'svfm',
+  'm-pf-add':'mpfadd','m-pf-edit':'mpfedit','sv-pf':'svpf',
+  'm-arr-open':'marropen','sv-arr':'svarr',
+  'm-pa-arr-open':'mpaarropen','sv-pa-arr':'svpaarr',
+  'm-pa-add':'mpaadd','m-pa-edit':'mpaedit','sv-pa':'svpa',
+  'm-oc-open':'mocopen','sv-oc':'svoc',
+  'm-ol-add':'moladd','m-ol-edit':'moledit','sv-ol':'svol',
+  'ask-del':'askdel','do-del':'dodel',
+  'export-backup':'exportBackup','export-backup-word':'exportBackupWord','import-backup':'importBackup','test-cloud-write':'testCloudWrite'
+};
+
+document.addEventListener('click',function(e){
+  var btn=e.target.closest('[data-action]');
+  if(!btn)return;
+  var act=btn.getAttribute('data-action'),id=btn.getAttribute('data-id')||'',key=AM[act];
+  if(key&&H[key]){try{H[key](id,btn)}catch(err){console.error('['+act+']',err);alert('錯誤: '+err.message)}}
+  else if(!key)console.warn('No handler:',act);
+});
+
+document.querySelectorAll('.nt').forEach(function(tab){
+  tab.addEventListener('click',function(){
+    document.querySelectorAll('.nt').forEach(function(t){t.classList.remove('on')});
+    document.querySelectorAll('.sec').forEach(function(s){s.classList.remove('on')});
+    tab.classList.add('on');
+    var id=tab.getAttribute('data-tab');
+    $('s-'+id).classList.add('on');
+    if(id==='order'){rOrdFull();rPwOrd();rLog();}
+    else if(id==='arr'){rArr();}
+    else if(id==='pw'){rPwTable();rPwSched();}
+    else rAll();
+  });
+});
+
+document.querySelectorAll('.mb').forEach(function(m){
+  m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('on')});
+});
+
+document.getElementById('import-file').addEventListener('change',function(e){
+  var file=e.target.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var d=JSON.parse(ev.target.result);
+      ['fm','pf','res','pa','pl','al','ol'].forEach(function(k){if(Array.isArray(d[k]))D[k]=d[k];});
+      save();rAll();
+      alert('✅ 備份還原成功！共載入 '+D.res.length+' 位胃喉院友，'+D.pa.length+' 位口服院友。');
+    }catch(err){alert('❌ 匯入失敗：'+err.message);}
+    e.target.value='';
+  };
+  reader.readAsText(file);
+});
+$('a-box').addEventListener('input',calcArr);
+$('a-sg').addEventListener('input',calcArr);
+$('ol-type').addEventListener('change',updOLprod);
+document.addEventListener('keydown',function(e){if(e.key==='Enter'&&(e.target.id==='uid'||e.target.id==='upw'))H.login()});
+setInterval(updateDate,60000);
+
+function refreshOlInfo(){
+  var sel=($('ol-res')||{}).value||'';
+  var oral='—', tube='—';
+  if(sel.indexOf('p:')===0){
+    var pa=(D.pa||[]).find(function(x){return x.id===sel.slice(2)})||null;
+    if(pa){
+      var pf=gPf(pa.pfId);
+      oral=(pf?pf.name:'未設定奶粉類別')+' / 建議 '+(parseInt(pa.orderQty||6,10)||6)+'罐';
+    }
+  }else if(sel.indexOf('r:')===0){
+    var rr=(D.res||[]).find(function(x){return x.id===sel.slice(2)})||null;
+    if(rr){
+      var qty=getNextOrderQty(rr.name);
+      tube=(qty===null?'—':qty+'箱');
+    }
+  }
+  var a=$('ol-suggest-oral'); if(a) a.textContent=oral;
+  var b=$('ol-suggest-tube'); if(b) b.textContent=tube;
+}
+function getNextOrderQty(name){
+  var NAMES=['吳新強','陳月來','葉俊強','周家祥','蕭偉麟','張天益','周月霞','黃告妹','黎杏潤'];
+  var idx=NAMES.indexOf(name); if(idx<0) return null;
+  var now=new Date(); now.setHours(0,0,0,0);
+  var yr=now.getFullYear();
+  var months=[[5,3],[6,1],[6,3],[7,1],[7,3],[8,1],[8,3],[9,1],[9,3],[10,1],[10,3],[11,1],[11,3],[12,1],[12,3],[1,1],[1,3],[2,1],[2,3],[3,1],[3,3],[4,1],[4,3]];
+  var SCHED={"5-3":[3,4,4,4,7,3,4,3,5],"6-1":[3,3,4,4,"-",3,3,2,2],"6-3":[3,4,5,5,7,3,4,3,3],"7-1":[3,3,4,4,"-",3,3,2,2],"7-3":[3,4,5,5,7,3,4,3,3],"8-1":[3,3,4,4,"-",3,3,2,2],"8-3":[3,4,5,5,7,3,4,3,3],"9-1":[3,4,4,4,"-",3,4,2,2],"9-3":[3,4,5,5,8,3,4,3,3],"10-1":[3,4,4,4,"-",3,4,2,2],"10-3":[3,4,5,5,8,3,4,3,3],"11-1":[3,4,4,4,"-",3,4,2,2],"11-3":[3,4,5,5,8,3,4,3,3],"12-1":[3,4,4,4,"-",3,4,2,2],"12-3":[4,4,5,5,8,4,4,3,3],"1-1":[3,4,4,4,"-",3,4,2,2],"1-3":[4,4,5,5,8,4,4,3,3],"2-1":[3,4,4,4,"-",3,4,2,2],"2-3":[4,4,5,5,8,4,4,3,3],"3-1":[3,4,4,4,"-",3,4,3,3],"3-3":[4,4,5,5,8,4,4,3,3],"4-1":[3,4,4,4,"-",3,4,3,3],"4-3":[4,4,5,5,8,4,4,3,3]};
+  function getOD(mo,round){var y=mo>=5?yr:yr+1; var d=new Date(y,mo-1,1),dw=d.getDay(),f=1+(dw<=1?1-dw:8-dw); return new Date(y,mo-1,f+(round===3?14:0));}
+  for(var i=0;i<months.length;i++){var mo=months[i][0],rd=months[i][1],d=getOD(mo,rd); d.setHours(0,0,0,0); if(d>=now){var q=(SCHED[mo+'-'+rd]||[])[idx]; return q==='-'?null:q;}}
+  return null;
+}
+
+</script>
+<script>
+// ===== PWA Setup =====
+(function(){
+  // Create manifest dynamically
+  var manifest = {
+    name: 'C區倉存管理系統',
+    short_name: 'C區倉存',
+    description: '鼻胃管及口服院友倉存管理',
+    start_url: './',
+    display: 'standalone',
+    background_color: '#eef4fb',
+    theme_color: '#1F4E78',
+    orientation: 'portrait',
+    icons: [
+      { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='38' fill='%231F4E78'/><text y='0.9em' font-size='144' x='12'>🩺</text></svg>", sizes: '192x192', type: 'image/svg+xml' },
+      { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%231F4E78'/><text y='0.9em' font-size='384' x='32'>🩺</text></svg>", sizes: '512x512', type: 'image/svg+xml' }
+    ]
+  };
+  var blob = new Blob([JSON.stringify(manifest)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  document.getElementById('manifestLink').href = url;
+
+  // Service Worker for offline
+  if('serviceWorker' in navigator){
+    var swCode = `
+const CACHE='cward-v1';
+const FILES=['./'];
+self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)))});
+self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('./'))))});
+`;
+    var swBlob = new Blob([swCode], {type:'text/javascript'});
+    var swUrl = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl).catch(function(){});
+  }
+
+  // Install prompt
+  var deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredPrompt = e;
+    var btn = document.getElementById('installBtn');
+    if(btn) btn.style.display = 'inline-block';
+  });
+  document.addEventListener('click', function(e){
+    if(e.target && e.target.id === 'installBtn' && deferredPrompt){
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function(){ deferredPrompt = null; document.getElementById('installBtn').style.display='none'; });
+    }
+  });
+  window.addEventListener('appinstalled', function(){
+    var btn = document.getElementById('installBtn');
+    if(btn) btn.style.display = 'none';
+  });
+})();
+
+function rPwOrd(){
+  var h='';
+  if(!D.pa.length){$('pw-ord-body').innerHTML='<p style="color:#aaa;padding:14px">暫無奶粉院友</p>';return;}
+  h='<div class="pwgrid">';
+  D.pa.forEach(function(pa){
+    var pf=gPf(pa.pfId),need=Math.max(0,pa.base-pa.stock),ordered=(D.ol||[]).some(function(o){return o.ownerType==='p'&&o.resId===pa.id&&o.stat==='已訂貨';});
+    var badge=ordered?'<div class="ord ord-red">已落單</div>':'<div class="ord">'+need+' 罐</div>';
+    h+='<div class="pwtile"><div class="nm">'+(pa.name||'—')+'</div><div><span class="ftag '+pfColor(pa.pfId)+'">'+(pf?pf.name:'—')+'</span></div><div class="sub">建議訂貨量（奶粉）</div>'+badge+'</div>';
+  });
+  h+='</div>';
+  $('pw-ord-body').innerHTML=h;
+}
+function rMed(){
+  if(!D.med)D.med=[];
+  var ho='',ha='';
+  (D.med||[]).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'')}).forEach(function(m){
+    var sc=m.stat==='已到貨'?'bg':m.stat==='已訂貨'?'by':'bgr';
+    var row='<tr><td>'+ (m.date||'') +'</td><td style="font-weight:600">'+(m.name||'—')+'</td><td>'+ (m.qty||'') +'</td><td><span class="badge '+sc+'">'+(m.stat||'—')+'</span></td><td style="color:#777">'+(m.note||'')+'</td><td><button class="bp">✏️</button> <button class="bd">刪除</button></td></tr>';
+    if((m.kind||'order')==='arr')ha+=row; else ho+=row;
+  });
+  if($('tb-med-order'))$('tb-med-order').innerHTML=ho||'<tr><td colspan="6" style="color:#aaa;padding:14px">暫無記錄</td></tr>';
+  if($('tb-med-arr'))$('tb-med-arr').innerHTML=ha||'<tr><td colspan="6" style="color:#aaa;padding:14px">暫無記錄</td></tr>';if($('tb-med-all'))$('tb-med-all').innerHTML=(D.med||[]).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'')}).map(function(m){var sc=m.stat==='已到貨'?'bg':m.stat==='已訂貨'?'by':'bgr';return '<tr><td>'+m.date+'</td><td style="font-weight:600">'+(m.ownerName||'—')+'</td><td>'+m.name+'</td><td>'+m.qty+'</td><td><span class="badge '+sc+'">'+m.stat+'</span></td><td style="color:#777">'+(m.note||'')+'</td><td><button class="bp" data-action="med-edit" data-id="'+m.id+'">✏️</button> <button class="bd" data-action="med-del" data-id="'+m.id+'">刪除</button></td></tr>';}).join('')||'<tr><td colspan="7" style="color:#aaa;padding:14px">暫無記錄</td></tr>';
+}
+
+
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+(function(){
+  try {
+    var firebaseConfig = {
+      apiKey: "AIzaSyAF5EU0i4iVN_5zC7vvwsqediY_U59540I",
+      authDomain: "ng-tube-manager.firebaseapp.com",
+      databaseURL: "https://ng-tube-manager-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "ng-tube-manager",
+      storageBucket: "ng-tube-manager.firebasestorage.app",
+      messagingSenderId: "771151519253",
+      appId: "1:771151519253:web:8d7dc9a1191bcb694af81c"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.database();
+    var DB_KEY = "ward_v5";
+    var dbRef = db.ref(DB_KEY); window.dbRef = dbRef; window.firebaseDb = db; window.__firebaseReady = true;
+
+    function showSync(msg, color) {
+      var el = document.getElementById("fb-sync-status");
+      if (!el) return;
+      el.textContent = msg;
+      el.style.color = color || "#fff";
+      el.style.opacity = "1";
+      clearTimeout(window._fbTimer);
+      window._fbTimer = setTimeout(function(){ el.style.opacity = "0"; }, 3500);
+    }
+
+    function isLoggedIn() {
+      var el = document.getElementById("APP");
+      return el && el.style.display !== "none" && el.style.display !== "";
+    }
+
+    // save() — 直接用 D 寫入 Firebase，唔經 localStorage
+    window.testCloudWrite=function(){if(!window.__firebaseReady||!dbRef||typeof dbRef.set!=='function'){showSync('⚠️ Firebase未連線','red');return;}dbRef.set({debugWrite:true,ts:new Date().toISOString()}).then(function(){showSync('✅ 測試寫入成功','green');}).catch(function(e){showSync('⚠️ 測試寫入失敗: '+(e.message||e),'red');console.error('TEST ERROR',e);});};
+    window.save = function(){if(!window.__firebaseReady||!dbRef||typeof dbRef.set!=='function'){showSync('⚠️ Firebase未連線','red');return;}dbRef.set(JSON.parse(JSON.stringify(D))).then(function(){showSync('✅ 已同步到雲端','green');}).catch(function(e){showSync('⚠️ 寫入失敗: '+(e.message||e),'red');console.error('SAVE ERROR',e);});};
+
+    function load(){if(!window.__firebaseReady||!dbRef||typeof dbRef.once!=='function'){showSync('⚠️ Firebase未連線','red');return;}dbRef.once('value').then(function(snap){var d=snap.exists()?snap.val()||{}:{};['fm','pf','res','pa','pl','al','ol','paa'].forEach(function(k){if(!Array.isArray(d[k]))d[k]=Array.isArray(D[k])?D[k]:[]});D=d;if(typeof rAll==='function')rAll();showSync('✅ 已從雲端載入','green');}).catch(function(e){showSync('⚠️ 讀取失敗: '+(e.message||e),'red');console.error('LOAD ERROR',e);});}
+
+    
+    console.log("✅ Firebase Compat SDK 已連接");
+  } catch(e) {
+    console.warn("Firebase 未能載入：", e.message);
+  }
+})();
+</script>
+</body>
+</html
+  medadd:function(){sv('med-id','');sv('med-date',td());sv('med-name','');sv('med-qty',1);sv('med-stat','已訂貨');sv('med-note','');fillMedOwner('med-owner','');$('m-med-t').textContent='新增醫療物資';om('m-med');},
+  mededit:function(id){var m=(D.med||[]).find(function(x){return x.id===id});if(!m)return;sv('med-id',id);sv('med-date',m.date||td());sv('med-name',m.name||'');sv('med-qty',m.qty||1);sv('med-stat',m.stat||'已訂貨');sv('med-note',m.note||'');fillMedOwner('med-owner',(m.ownerType||'r')+':'+(m.ownerId||''));$('m-med-t').textContent='編輯醫療物資';om('m-med');},
+  savemed:function(){var id=gv('med-id'),sel=(gv('med-owner')||'r:').split(':'),kind=sel[0],oid=sel[1],owner=kind==='p'?gPa(oid):gR(oid),m={date:gv('med-date'),ownerType:kind,ownerId:oid,ownerName:owner?owner.name:'—',name:gv('med-name'),qty:iv('med-qty')||1,stat:gv('med-stat'),note:gv('med-note')};if(id){var old=(D.med||[]).find(function(x){return x.id===id});if(old)Object.assign(old,m)}else{m.id=uid();D.med.push(m)}save();cm2('m-med');rAll();},
+  meddel:function(id){if(!confirm('確認刪除？'))return;D.med=(D.med||[]).filter(function(x){return x.id!==id});save();rAll();},
+  closmed:function(){cm2('m-med');},
+>
+<style></style>
