@@ -774,7 +774,8 @@ function rOrd(){
 function calcArr(){
   var rid=gv('a-rid'),r=gR(rid),f=r?gFm(r.fm):null,pb=f?(f.pb+f.bn):24;
   var tot=iv('a-box')*pb+iv('a-sg');
-  $('a-calc').innerHTML='每箱實收 <b>'+pb+'</b>支 | 今次 <b>'+tot+'</b>支 | 到貨後 <b style="color:#70AD47">'+(r?r.stock+tot:tot)+'</b>支';
+  var base=r?curStock(r):0;
+  $('a-calc').innerHTML='每箱實收 <b>'+pb+'</b>支 | 今次 <b>'+tot+'</b>支 | 到貨後 <b style="color:#70AD47">'+(base+tot)+'</b>支';
 }
 function fillOrderRes(sel){
   var s=$(sel); if(!s)return; s.innerHTML='';
