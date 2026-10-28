@@ -236,6 +236,59 @@ footer{text-align:center;padding:11px;font-size:11px;color:#bbb}
       </div>
     </div>
 
+<!-- 後備物資 -->
+<div class="sec" id="s-spare">
+  <div class="card">
+    <div class="ct">🥛 奶粉後備存量（罐）</div>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr>
+            <th>奶粉</th>
+            <th>規格</th>
+            <th>後備存量</th>
+          </tr>
+        </thead>
+        <tbody id="tb-spare-pf"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">🧑‍⚕️ 鼻胃管支裝奶後備存量（支）</div>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr>
+            <th>支裝奶</th>
+            <th>容量</th>
+            <th>後備存量</th>
+          </tr>
+        </thead>
+        <tbody id="tb-spare-fm"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">📦 其他後備物資
+      <button class="bp" data-action="spare-other-add">➕ 新增</button>
+    </div>
+    <div class="tw">
+      <table>
+        <thead>
+          <tr>
+            <th>物資名稱</th>
+            <th>數量</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tb-spare-other"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+    
     <!-- 歷史記錄 -->
     <div class="sec" id="s-log">
       <div class="card">
@@ -370,6 +423,27 @@ footer{text-align:center;padding:11px;font-size:11px;color:#bbb}
   <div class="mf"><button class="bd" data-action="mc" data-t="m-ol">取消</button><button class="bs" data-action="sv-ol">儲存</button></div>
 </div></div>
 
+<div class="mb" id="m-spare">
+  <div class="md">
+    <h3 id="m-spare-t">其他後備物資</h3>
+    <input type="hidden" id="sp-id">
+    <div class="fg2">
+      <div class="fg">
+        <label>物資名稱 *</label>
+        <input id="sp-name" type="text" placeholder="例如：手套、尿片、消毒紙">
+      </div>
+      <div class="fg">
+        <label>數量</label>
+        <input id="sp-qty" type="number" value="0" min="0">
+      </div>
+    </div>
+    <div class="mf">
+      <button class="bd" data-action="mc" data-t="m-spare">取消</button>
+      <button class="bs" data-action="sv-spare-other">儲存</button>
+    </div>
+  </div>
+</div>
+  
 <div class="mb" id="m-del"><div class="md" style="text-align:center;max-width:360px">
   <div style="font-size:34px;margin-bottom:8px">⚠️</div>
   <h3 id="m-del-t">確認刪除？</h3>
@@ -397,7 +471,8 @@ var D={
     {id:'r3',name:'院友C',fm:'f3',daily:1,stock:56,safety:28,admit:'2026-05-01',hosp:'',dis:''},
     {id:'r4',name:'院友D',fm:'f4',daily:1,stock:24,safety:24,admit:'2026-05-01',hosp:'',dis:''}
   ],
-  pa:[],pl:[],al:[],paa:[],ol:[]
+  pa:[],pl:[],al:[],paa:[],ol:[],
+  spare:{pf:{},fm:{},other:[]}
 };
 
 function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
@@ -651,6 +726,117 @@ function rLog(){
     ph+='<tr><td>'+l.date+'</td><td style="font-weight:600">'+(l.resName||'—')+'</td><td><span class="ftag '+pfColor(l.pfId)+'">'+(gPf(l.pfId)?gPf(l.pfId).name:'—')+'</span></td><td style="color:#777">'+(l.note||'')+'</td></tr>';
   });
   $('tb-pl').innerHTML=ph||'<tr><td colspan="4" style="color:#aaa;padding:14px">暫無記錄</td></tr>';
+}
+
+  // ===== 後備物資 =====
+function rSpare(){
+  if(!D.spare) D.spare={pf:{},fm:{},other:[]};
+  if(!D.spare.pf) D.spare.pf={};
+  if(!D.spare.fm) D.spare.fm={};
+  if(!D.spare.other) D.spare.other=[];
+
+  var hp='';
+  D.pf.forEach(function(p){
+    var q=D.spare.pf[p.id]||0;
+    hp+='<tr>';
+    hp+='<td style="text-align:left;font-weight:600">'+escapeHtml(p.name||'—')+'</td>';
+    hp+='<td>'+escapeHtml(p.sz||'—')+'</td>';
+    hp+='<td><input type="number" min="0" value="'+q+'" style="width:90px;padding:6px;border:1.5px solid #D0DFF0;border-radius:6px" onchange="svSpareQty(\'pf\',\''+p.id+'\',this.value)"></td>';
+    hp+='</tr>';
+  });
+  $('tb-spare-pf').innerHTML=hp||'<tr><td colspan="3" style="color:#aaa;padding:14px">暫無奶粉類別，請先到「設定」新增</td></tr>';
+
+  var hf='';
+  D.fm.forEach(function(f){
+    var q=D.spare.fm[f.id]||0;
+    hf+='<tr>';
+    hf+='<td style="text-align:left;font-weight:600">'+escapeHtml(f.name||'—')+'</td>';
+    hf+='<td>'+(f.ml||'—')+'ml</td>';
+    hf+='<td><input type="number" min="0" value="'+q+'" style="width:90px;padding:6px;border:1.5px solid #D0DFF0;border-radius:6px" onchange="svSpareQty(\'fm\',\''+f.id+'\',this.value)"></td>';
+    hf+='</tr>';
+  });
+  $('tb-spare-fm').innerHTML=hf||'<tr><td colspan="3" style="color:#aaa;padding:14px">暫無支裝奶類別</td></tr>';
+
+  var ho='';
+  D.spare.other.forEach(function(o){
+    ho+='<tr>';
+    ho+='<td style="text-align:left;font-weight:600">'+escapeHtml(o.name||'—')+'</td>';
+    ho+='<td><input type="number" min="0" value="'+(o.qty||0)+'" style="width:90px;padding:6px;border:1.5px solid #D0DFF0;border-radius:6px" onchange="svSpareOtherQty(\''+o.id+'\',this.value)"></td>';
+    ho+='<td>';
+    ho+='<button class="bp" data-action="spare-other-edit" data-id="'+o.id+'">✏️</button> ';
+    ho+='<button class="bd" data-action="spare-other-del" data-id="'+o.id+'">🗑️</button>';
+    ho+='</td>';
+    ho+='</tr>';
+  });
+  $('tb-spare-other').innerHTML=ho||'<tr><td colspan="3" style="color:#aaa;padding:14px">暫無其他後備物資</td></tr>';
+}
+
+function svSpareQty(kind,id,val){
+  if(!D.spare) D.spare={pf:{},fm:{},other:[]};
+  if(!D.spare[kind]) D.spare[kind]={};
+  D.spare[kind][id]=Math.max(0,parseInt(val)||0);
+  save();
+}
+
+function svSpareOtherQty(id,val){
+  var o=D.spare.other.find(function(x){return x.id===id});
+  if(!o)return;
+  o.qty=Math.max(0,parseInt(val)||0);
+  save();
+}
+
+function spareOtherAdd(){
+  $('m-spare-t').textContent='新增其他後備物資';
+  sv('sp-id','');
+  sv('sp-name','');
+  sv('sp-qty',0);
+  om('m-spare');
+}
+
+function spareOtherEdit(id){
+  var o=D.spare.other.find(function(x){return x.id===id});
+  if(!o)return;
+  $('m-spare-t').textContent='編輯 — '+(o.name||'');
+  sv('sp-id',o.id);
+  sv('sp-name',o.name||'');
+  sv('sp-qty',o.qty||0);
+  om('m-spare');
+}
+
+function svSpareOther(){
+  var name=gv('sp-name').trim();
+  if(!name){
+    alert('請輸入物資名稱');
+    return;
+  }
+
+  var id=gv('sp-id');
+  var qty=Math.max(0,iv('sp-qty'));
+
+  if(id){
+    var o=D.spare.other.find(function(x){return x.id===id});
+    if(o){
+      o.name=name;
+      o.qty=qty;
+    }
+  }else{
+    D.spare.other.push({
+      id:uid(),
+      name:name,
+      qty:qty
+    });
+  }
+
+  save();
+  cm2('m-spare');
+  rSpare();
+}
+
+function spareOtherDel(id){
+  if(!confirm('確認刪除呢項後備物資？'))return;
+  D.spare.other=D.spare.other.filter(function(x){return x.id!==id});
+  save();
+  rSpare();
 }
 
 function rSch(){
@@ -989,7 +1175,11 @@ var AM={
   'm-oc-open':'mocopen','sv-oc':'svoc',
   'm-ol-add':'moladd','m-ol-edit':'moledit','sv-ol':'svol',
   'ask-del':'askdel','do-del':'dodel',
-  'export-backup':'exportBackup','export-backup-word':'exportBackupWord','import-backup':'importBackup','test-cloud-write':'testCloudWrite'
+  'export-backup':'exportBackup','export-backup-word':'exportBackupWord','import-backup':'importBackup','test-cloud-write':'testCloudWrite',
+  'spare-other-add':spareOtherAdd,
+  'spare-other-edit':spareOtherEdit,
+  'spare-other-del':spareOtherDel,
+  'sv-spare-other':svSpareOther
 };
 
 document.addEventListener('click',function(e){
@@ -1007,7 +1197,9 @@ document.querySelectorAll('.nt').forEach(function(tab){
     tab.classList.add('on');
     var id=tab.getAttribute('data-tab');
     $('s-'+id).classList.add('on');
-    if(id==='order'){rOrdFull();rPwOrd();rLog();}
+    if(id === 'spare'){
+  rSpare();
+} else if(id === 'order'){rOrdFull();rPwOrd();rLog();}
     else if(id==='arr'){rArr();}
     else if(id==='pw'){rPwTable();rPwSched();}
     else rAll();
